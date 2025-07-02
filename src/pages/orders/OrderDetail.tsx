@@ -1,272 +1,199 @@
-import { TmsLayout } from "@/components/TmsLayout";
-import { TmsMap } from "@/components/maps/TmsMap";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Separator } from "@/components/ui/separator";
-import { 
-  Edit, 
-  Download, 
-  MapPin, 
-  Package, 
-  Truck, 
-  Calendar, 
-  FileText,
-  User,
-  Phone,
-  Mail,
-  Clock
-} from "lucide-react";
 
-// Sample order data
+import { TmsLayout } from "@/components/TmsLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { TmsMap } from "@/components/maps/TmsMap";
+import { Separator } from "@/components/ui/separator";
+import { FileText, MapPin, Truck, Clock, User, Edit, X } from "lucide-react";
+
+// Sample order data - in real app this would come from API/router params
 const orderData = {
   id: "ORD-001",
-  status: "tendered" as const,
   customer: "ABC Logistics Inc.",
   poNumber: "PO-2024-001",
-  createdDate: "2024-01-10",
   pickupDate: "2024-01-15",
   deliveryDate: "2024-01-18",
-  
-  contact: {
-    name: "John Johnson",
-    phone: "(555) 123-4567",
-    email: "john@abclogistics.com"
-  },
-  
+  status: "created" as const,
+  division: "West",
   origin: {
-    company: "ABC Logistics Warehouse",
     address: "1234 Industrial Blvd",
     city: "Los Angeles",
     state: "CA",
     zip: "90210",
-    contact: "Sarah Wilson",
-    phone: "(555) 234-5678"
+    coordinates: [-118.2437, 34.0522] as [number, number]
   },
-  
   destination: {
-    company: "Phoenix Distribution Center",
-    address: "5678 Commerce Drive",
-    city: "Phoenix", 
+    address: "5678 Commerce Way", 
+    city: "Phoenix",
     state: "AZ",
     zip: "85001",
-    contact: "Mike Davis",
-    phone: "(555) 345-6789"
+    coordinates: [-112.0740, 33.4484] as [number, number]
   },
-  
   freight: {
-    pallets: 10,
+    pallets: 15,
     weight: "15,000 lbs",
-    dimensions: "48x40x48",
-    commodity: "Electronics & Components",
-    value: "$2,850.00",
-    equipmentType: "Dry Van 53'"
+    commodity: "Electronics",
+    dimensions: "48x40x48"
   },
-  
-  accessorials: ["Liftgate - Destination", "Appointment Required"],
-  
-  instructions: "Handle with care. Electronics are fragile. Delivery appointment required 24 hours in advance.",
-  
-  documents: [
-    { name: "Bill of Lading.pdf", uploadDate: "2024-01-10", type: "BOL" },
-    { name: "Purchase Order.pdf", uploadDate: "2024-01-10", type: "PO" },
-    { name: "Special Instructions.doc", uploadDate: "2024-01-11", type: "Instructions" }
-  ]
+  equipment: "Dry Van (53')",
+  value: "$2,850.00",
+  accessorials: ["Liftgate - Origin", "Appointment Required"],
+  specialInstructions: "Handle with care - fragile electronics. Call 2 hours before delivery.",
+  internalNotes: "High-value customer - priority handling"
 };
 
 const auditTrail = [
-  { date: "2024-01-10 09:00 AM", user: "Jane Smith", action: "Order Created", details: "Initial order entry" },
-  { date: "2024-01-10 09:15 AM", user: "Jane Smith", action: "Documents Uploaded", details: "BOL and PO attached" },
-  { date: "2024-01-11 02:30 PM", user: "Mike Johnson", action: "Order Reviewed", details: "Validated address and pricing" },
-  { date: "2024-01-12 10:45 AM", user: "System", action: "Shipment Created", details: "Added to shipment SHIP-001" },
-  { date: "2024-01-13 03:20 PM", user: "Dispatch", action: "Carrier Assigned", details: "Tendered to Reliable Transport Co." }
+  { timestamp: "2024-01-14 09:15", user: "John Dispatcher", action: "Order Created", details: "Initial order entry completed" },
+  { timestamp: "2024-01-14 09:20", user: "System", action: "Validation Passed", details: "All required fields validated" },
+  { timestamp: "2024-01-14 10:30", user: "Jane CSR", action: "Customer Contacted", details: "Confirmed pickup window with customer" },
+  { timestamp: "2024-01-14 14:45", user: "Mike Planner", action: "Rate Quoted", details: "Rate of $2,850 quoted and accepted" }
+];
+
+const attachedDocuments = [
+  { name: "BOL_ORD001.pdf", type: "Bill of Lading", size: "245 KB", uploadedBy: "John Dispatcher", uploadedAt: "2024-01-14 09:25" },
+  { name: "Special_Instructions.docx", type: "Instructions", size: "12 KB", uploadedBy: "Jane CSR", uploadedAt: "2024-01-14 10:35" }
 ];
 
 export default function OrderDetail() {
   const mapLocations = [
     {
-      id: "origin",
-      coordinates: [-118.2437, 34.0522] as [number, number],
-      type: "pickup" as const,
-      label: `${orderData.origin.company} - Pickup`,
-      status: "completed" as any
+      id: 'pickup',
+      coordinates: orderData.origin.coordinates,
+      type: 'pickup' as const,
+      label: `${orderData.origin.city}, ${orderData.origin.state}`,
+      status: 'pending' as const
     },
     {
-      id: "destination", 
-      coordinates: [-112.0740, 33.4484] as [number, number],
-      type: "delivery" as const,
-      label: `${orderData.destination.company} - Delivery`,
-      status: "pending" as any
+      id: 'delivery',
+      coordinates: orderData.destination.coordinates,
+      type: 'delivery' as const,
+      label: `${orderData.destination.city}, ${orderData.destination.state}`,
+      status: 'pending' as const
     }
   ];
 
   return (
     <TmsLayout 
-      title={`Order ${orderData.id}`}
+      title="Order Details"
       breadcrumbs={[
         { label: "Orders", href: "/" },
         { label: orderData.id }
       ]}
     >
       <div className="p-6 space-y-6">
-        {/* Header Actions */}
+        {/* Header with Actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold">{orderData.id}</h1>
+              <p className="text-muted-foreground">{orderData.customer}</p>
+            </div>
             <StatusBadge status={orderData.status} />
-            <Badge variant="outline">{orderData.customer}</Badge>
-            <Badge variant="outline">{orderData.poNumber}</Badge>
+            <Badge variant="outline">{orderData.division}</Badge>
           </div>
           
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-            <Button variant="outline" size="sm">
               <Edit className="h-4 w-4 mr-2" />
               Edit Order
             </Button>
+            <Button variant="outline" size="sm">
+              Duplicate
+            </Button>
             <Button variant="destructive" size="sm">
+              <X className="h-4 w-4 mr-2" />
               Cancel Order
             </Button>
           </div>
         </div>
 
-        <Tabs defaultValue="details" className="space-y-6">
+        <Tabs defaultValue="summary" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="details">Order Details</TabsTrigger>
-            <TabsTrigger value="route">Route & Map</TabsTrigger>
+            <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="stops">Stops & Route</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
-            <TabsTrigger value="tracking">Tracking</TabsTrigger>
             <TabsTrigger value="audit">Audit Trail</TabsTrigger>
           </TabsList>
 
-          {/* Order Details */}
-          <TabsContent value="details">
+          {/* Summary Tab */}
+          <TabsContent value="summary">
             <div className="grid grid-cols-3 gap-6">
-              {/* Customer Information */}
+              {/* Order Information */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Customer Information
+                    <FileText className="h-5 w-5" />
+                    Order Information
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <div className="font-medium">{orderData.customer}</div>
-                    <div className="text-sm text-muted-foreground">Customer</div>
-                  </div>
-                  <Separator />
-                  <div>
-                    <div className="font-medium">{orderData.contact.name}</div>
-                    <div className="text-sm text-muted-foreground">Contact Person</div>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4" />
-                    {orderData.contact.phone}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4" />
-                    {orderData.contact.email}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Origin Details */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full" />
-                    Origin
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <div className="font-medium">{orderData.origin.company}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {orderData.origin.address}<br />
-                      {orderData.origin.city}, {orderData.origin.state} {orderData.origin.zip}
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">PO Number:</span>
+                      <p>{orderData.poNumber}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Equipment:</span>
+                      <p>{orderData.equipment}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Pickup Date:</span>
+                      <p>{orderData.pickupDate}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Delivery Date:</span>
+                      <p>{orderData.deliveryDate}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Value:</span>
+                      <p className="font-semibold text-green-600">{orderData.value}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Division:</span>
+                      <p>{orderData.division}</p>
                     </div>
                   </div>
-                  <Separator />
-                  <div>
-                    <div className="font-medium">{orderData.origin.contact}</div>
-                    <div className="text-sm text-muted-foreground">{orderData.origin.phone}</div>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4" />
-                    Pickup: {orderData.pickupDate}
-                  </div>
                 </CardContent>
               </Card>
 
-              {/* Destination Details */}
+              {/* Freight Details */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full" />
-                    Destination
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <div className="font-medium">{orderData.destination.company}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {orderData.destination.address}<br />
-                      {orderData.destination.city}, {orderData.destination.state} {orderData.destination.zip}
-                    </div>
-                  </div>
-                  <Separator />
-                  <div>
-                    <div className="font-medium">{orderData.destination.contact}</div>
-                    <div className="text-sm text-muted-foreground">{orderData.destination.phone}</div>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4" />
-                    Delivery: {orderData.deliveryDate}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Freight Details */}
-            <div className="grid grid-cols-2 gap-6 mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5" />
+                    <Truck className="h-5 w-5" />
                     Freight Details
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <div className="text-2xl font-bold">{orderData.freight.pallets}</div>
-                      <div className="text-sm text-muted-foreground">Pallets</div>
+                      <span className="font-medium">Pallets:</span>
+                      <p>{orderData.freight.pallets}</p>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">{orderData.freight.weight}</div>
-                      <div className="text-sm text-muted-foreground">Weight</div>
+                      <span className="font-medium">Weight:</span>
+                      <p>{orderData.freight.weight}</p>
                     </div>
                     <div>
-                      <div className="font-medium">{orderData.freight.commodity}</div>
-                      <div className="text-sm text-muted-foreground">Commodity</div>
+                      <span className="font-medium">Commodity:</span>
+                      <p>{orderData.freight.commodity}</p>
                     </div>
                     <div>
-                      <div className="font-medium">{orderData.freight.value}</div>
-                      <div className="text-sm text-muted-foreground">Declared Value</div>
+                      <span className="font-medium">Dimensions:</span>
+                      <p>{orderData.freight.dimensions}</p>
                     </div>
                   </div>
-                  <Separator className="my-4" />
+                  
+                  <Separator />
+                  
                   <div>
-                    <div className="font-medium mb-2">Accessorials</div>
-                    <div className="flex flex-wrap gap-1">
+                    <span className="font-medium text-sm">Accessorials:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
                       {orderData.accessorials.map((accessorial) => (
-                        <Badge key={accessorial} variant="secondary">
+                        <Badge key={accessorial} variant="secondary" className="text-xs">
                           {accessorial}
                         </Badge>
                       ))}
@@ -275,193 +202,167 @@ export default function OrderDetail() {
                 </CardContent>
               </Card>
 
+              {/* Addresses */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Truck className="h-5 w-5" />
-                    Equipment & Instructions
+                    <MapPin className="h-5 w-5" />
+                    Route
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <div className="font-medium">{orderData.freight.equipmentType}</div>
-                    <div className="text-sm text-muted-foreground">Equipment Type</div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full" />
+                      <span className="font-medium text-sm">Origin</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground ml-5">
+                      <p>{orderData.origin.address}</p>
+                      <p>{orderData.origin.city}, {orderData.origin.state} {orderData.origin.zip}</p>
+                    </div>
                   </div>
-                  <Separator />
+                  
                   <div>
-                    <div className="text-sm font-medium mb-2">Special Instructions</div>
-                    <div className="text-sm text-muted-foreground bg-muted p-3 rounded">
-                      {orderData.instructions}
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-3 h-3 bg-red-500 rounded-full" />
+                      <span className="font-medium text-sm">Destination</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground ml-5">
+                      <p>{orderData.destination.address}</p>
+                      <p>{orderData.destination.city}, {orderData.destination.state} {orderData.destination.zip}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Notes */}
+            <div className="grid grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Special Instructions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm">{orderData.specialInstructions}</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Internal Notes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm">{orderData.internalNotes}</p>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
-          {/* Route & Map */}
-          <TabsContent value="route">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Route Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TmsMap 
-                  locations={mapLocations}
-                  showRoutes={true}
-                />
-                
-                <div className="grid grid-cols-4 gap-4 mt-4">
-                  <div className="text-center p-3 bg-muted rounded">
-                    <div className="text-2xl font-bold">425</div>
-                    <div className="text-sm text-muted-foreground">Miles</div>
-                  </div>
-                  <div className="text-center p-3 bg-muted rounded">
-                    <div className="text-2xl font-bold">6.5</div>
-                    <div className="text-sm text-muted-foreground">Hours</div>
-                  </div>
-                  <div className="text-center p-3 bg-muted rounded">
-                    <div className="text-2xl font-bold">2</div>
-                    <div className="text-sm text-muted-foreground">Stops</div>
-                  </div>
-                  <div className="text-center p-3 bg-muted rounded">
-                    <div className="text-2xl font-bold">$1,250</div>
-                    <div className="text-sm text-muted-foreground">Est. Cost</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Stops & Route Tab */}
+          <TabsContent value="stops">
+            <div className="space-y-6">
+              <TmsMap locations={mapLocations} showRoutes={true} />
+              
+              <div className="grid grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full" />
+                      Pickup Stop
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <p className="font-medium">{orderData.origin.address}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {orderData.origin.city}, {orderData.origin.state} {orderData.origin.zip}
+                    </p>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4" />
+                      <span>Scheduled: {orderData.pickupDate} 08:00 - 17:00</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-red-500 rounded-full" />
+                      Delivery Stop
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <p className="font-medium">{orderData.destination.address}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {orderData.destination.city}, {orderData.destination.state} {orderData.destination.zip}
+                    </p>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4" />
+                      <span>Scheduled: {orderData.deliveryDate} 08:00 - 17:00</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
-          {/* Documents */}
+          {/* Documents Tab */}
           <TabsContent value="documents">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Attached Documents
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Document Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Upload Date</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {orderData.documents.map((doc, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{doc.name}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{doc.type}</Badge>
-                        </TableCell>
-                        <TableCell>{doc.uploadDate}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline">View</Button>
-                            <Button size="sm" variant="outline">Download</Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Tracking */}
-          <TabsContent value="tracking">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Order Status Timeline
-                </CardTitle>
+                <CardTitle>Attached Documents</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4 p-3 bg-green-50 border border-green-200 rounded">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <div className="font-medium">Order Created</div>
-                      <div className="text-sm text-muted-foreground">January 10, 2024 at 9:00 AM</div>
+                  {attachedDocuments.map((doc, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-8 w-8 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium">{doc.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {doc.type} • {doc.size} • Uploaded by {doc.uploadedBy}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm">Download</Button>
+                        <Button variant="ghost" size="sm">
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 p-3 bg-green-50 border border-green-200 rounded">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <div className="font-medium">Order Planned</div>
-                      <div className="text-sm text-muted-foreground">January 12, 2024 at 10:45 AM</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <div className="flex-1">
-                      <div className="font-medium">Carrier Assigned</div>
-                      <div className="text-sm text-muted-foreground">January 13, 2024 at 3:20 PM</div>
-                      <div className="text-sm text-muted-foreground">Reliable Transport Co.</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 p-3 bg-muted/50 border border-muted rounded">
-                    <div className="w-3 h-3 bg-muted-foreground rounded-full"></div>
-                    <div className="flex-1">
-                      <div className="font-medium text-muted-foreground">Pickup Scheduled</div>
-                      <div className="text-sm text-muted-foreground">January 15, 2024 - Pending</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 p-3 bg-muted/50 border border-muted rounded">
-                    <div className="w-3 h-3 bg-muted-foreground rounded-full"></div>
-                    <div className="flex-1">
-                      <div className="font-medium text-muted-foreground">Delivery Scheduled</div>
-                      <div className="text-sm text-muted-foreground">January 18, 2024 - Pending</div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Audit Trail */}
+          {/* Audit Trail Tab */}
           <TabsContent value="audit">
             <Card>
               <CardHeader>
                 <CardTitle>Audit Trail</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date & Time</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Action</TableHead>
-                      <TableHead>Details</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {auditTrail.map((entry, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{entry.date}</TableCell>
-                        <TableCell>{entry.user}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{entry.action}</Badge>
-                        </TableCell>
-                        <TableCell>{entry.details}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="space-y-4">
+                  {auditTrail.map((entry, index) => (
+                    <div key={index} className="flex gap-4 pb-4 border-b last:border-b-0">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{entry.action}</span>
+                            <Badge variant="outline" className="text-xs">{entry.user}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">{entry.details}</p>
+                        </div>
+                      </div>
+                      <div className="text-sm text-muted-foreground whitespace-nowrap">
+                        {entry.timestamp}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { Package, Ship } from "lucide-react";
+import { Package, Ship, Truck, Users } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import {
@@ -34,8 +35,8 @@ const menuItems = [
     subItems: [
       { title: "Shipment List", url: "/shipments" },
       { title: "Planning", url: "/shipments/planning" },
-      { title: "Carrier Assignment", url: "/shipments/carriers" },
-      { title: "Dispatch", url: "/shipments/dispatch" },
+      { title: "Carrier Assignment", url: "/shipments/tendering" },
+      { title: "Dispatch Board", url: "/shipments/dispatch" },
       { title: "Tracking", url: "/shipments/tracking" },
     ]
   },
@@ -66,7 +67,7 @@ export function TmsSidebar() {
             </div>
             {!collapsed && (
               <div>
-                <div className="font-semibold text-sm">FreightFlow</div>
+                <div className="font-semibold text-sm">FreightPath Nova</div>
                 <div className="text-xs text-muted-foreground">Transportation Management</div>
               </div>
             )}
