@@ -26,7 +26,8 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					hover: 'hsl(var(--primary-hover))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -61,6 +62,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				status: {
+					created: 'hsl(var(--status-created))',
+					planned: 'hsl(var(--status-planned))',
+					tendered: 'hsl(var(--status-tendered))',
+					'in-transit': 'hsl(var(--status-in-transit))',
+					delivered: 'hsl(var(--status-delivered))',
+					cancelled: 'hsl(var(--status-cancelled))'
 				}
 			},
 			borderRadius: {
