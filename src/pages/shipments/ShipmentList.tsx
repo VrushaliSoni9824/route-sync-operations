@@ -230,7 +230,7 @@ export default function ShipmentList() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={shipment.status} />
+                      {/* <StatusBadge status={shipment.status} /> */}
                     </TableCell>
                     <TableCell>{shipment.carrier}</TableCell>
                     <TableCell className="text-sm">
@@ -243,7 +243,9 @@ export default function ShipmentList() {
                     <TableCell>
                       <div className="flex gap-1">
                         <Button size="sm" variant="outline" asChild>
-                          <Link to={`/shipments/${shipment.id}`}>View</Link>
+                        <Link to="/shipments/SHP-001">View</Link>
+                        
+                          {/* <Link to={`/shipments/${shipment.id}`}>View</Link> */}
                         </Button>
                         <Button size="sm" variant="outline">Edit</Button>
                       </div>

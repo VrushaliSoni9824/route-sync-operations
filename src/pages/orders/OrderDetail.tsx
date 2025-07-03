@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { TmsMap } from "@/components/maps/TmsMap";
 import { Separator } from "@/components/ui/separator";
-import { FileText, MapPin, Truck, Clock, User, Edit, X } from "lucide-react";
+import { FileText, MapPin, Truck, Clock, User, Edit, X, CheckCircle } from "lucide-react";
 
 // Sample order data - in real app this would come from API/router params
 const orderData = {
@@ -74,7 +74,67 @@ export default function OrderDetail() {
       status: 'pending' as const
     }
   ];
+  type TripStatus = "created" | "dispatched" | "in-progress" | "delivered" | "closed";
 
+  const sampleTrip = {
+    id: "TRP-001",
+    shipmentId: "SHP-001",
+    status: "in-progress" as TripStatus,
+    driver: {
+      name: "John Doe",
+      phone: "(555) 123-4567",
+      license: "CDL-A",
+      terminal: "Northeast Hub"
+    },
+    equipment: {
+      tractorId: "TRC-001",
+      trailerId: "TRL-001",
+      type: "Dry Van",
+      capacity: "48,000 lbs"
+    },
+    route: {
+      origin: "New York, NY",
+      destination: "Boston, MA",
+      distance: "215 miles",
+      estimatedDuration: "4-6 hours"
+    },
+    stops: [
+      {
+        id: "1",
+        type: "pickup" as const,
+        location: "Warehouse A, 123 Main St, New York, NY",
+        coordinates: [-74.0, 40.7] as [number, number],
+        scheduledTime: "08:00",
+        actualTime: "08:15",
+        status: "completed",
+        notes: "Loaded 10 pallets"
+      },
+      {
+        id: "2", 
+        type: "delivery" as const,
+        location: "Distribution Center, 456 Oak Ave, Boston, MA",
+        coordinates: [-71.0, 42.3] as [number, number],
+        scheduledTime: "16:00",
+        actualTime: null,
+        status: "in-progress",
+        notes: ""
+      }
+    ],
+    currentLocation: [-72.5, 41.5] as [number, number],
+    createdAt: "2024-01-15T06:00:00Z",
+    dispatchedAt: "2024-01-15T07:30:00Z",
+    estimatedArrival: "2024-01-15T16:30:00Z"
+  };
+  const getCurrentStepIndex = () => {
+    return statusSteps.findIndex(step => step.key === sampleTrip.status);
+  };
+  const statusSteps = [
+    { key: "created", label: "Created", icon: FileText },
+    { key: "dispatched", label: "Dispatched", icon: Truck },
+    { key: "in-progress", label: "In Progress", icon: MapPin },
+    { key: "delivered", label: "Delivered", icon: CheckCircle },
+    { key: "closed", label: "Closed", icon: FileText }
+  ];
   return (
     <TmsLayout 
       title="Order Details"
@@ -109,7 +169,39 @@ export default function OrderDetail() {
             </Button>
           </div>
         </div>
+        <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            {statusSteps.map((step, index) => {
+              const isCompleted = index < getCurrentStepIndex();
+              const isCurrent = index === getCurrentStepIndex();
+              const StepIcon = step.icon;
 
+              return (
+                <div key={step.key} className="flex items-center">
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                    isCompleted ? "bg-green-100 text-green-600" :
+                    isCurrent ? "bg-blue-100 text-blue-600" :
+                    "bg-gray-100 text-gray-400"
+                  }`}>
+                    <StepIcon className="h-5 w-5" />
+                  </div>
+                  <div className="ml-2 text-sm">
+                    <p className={`font-medium ${isCurrent ? "text-blue-600" : ""}`}>
+                      {step.label}
+                    </p>
+                  </div>
+                  {index < statusSteps.length - 1 && (
+                    <div className={`mx-4 h-px w-16 ${
+                      isCompleted ? "bg-green-300" : "bg-gray-300"
+                    }`} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
         <Tabs defaultValue="summary" className="space-y-6">
           <TabsList>
             <TabsTrigger value="summary">Summary</TabsTrigger>

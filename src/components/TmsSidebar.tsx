@@ -90,7 +90,7 @@ export function TmsSidebar() {
                     <SidebarMenuButton asChild>
                       <NavLink to={subItem.url} className={getNavCls}>
                         <div className="w-2 h-2 rounded-full bg-current opacity-40 ml-6" />
-                        {!collapsed && <span className="text-sm">{subItem.title}</span>}
+                        {!collapsed && <span className="text-sm text-black">{subItem.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

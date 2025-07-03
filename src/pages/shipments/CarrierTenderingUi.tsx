@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Search, Send, Clock, CheckCircle, XCircle, AlertCircle, Truck, Mail, Smartphone, Globe } from "lucide-react";
-import { CarrierTenderingUi } from "./CarrierTenderingUi";
+
 // Sample data
 const carriers = [
   {
@@ -84,7 +84,7 @@ const tenderHistory = [
   }
 ];
 
-export default function CarrierTendering() {
+export function CarrierTenderingUi() {
   const [selectedCarriers, setSelectedCarriers] = useState<string[]>([]);
   const [tenderMethod, setTenderMethod] = useState("auto");
   const [tenderWindow, setTenderWindow] = useState("30");
@@ -125,14 +125,7 @@ export default function CarrierTendering() {
   };
 
   return (
-    <TmsLayout 
-      title="Carrier Tendering"
-      breadcrumbs={[
-        { label: "Shipments", href: "/shipments" },
-        { label: "Planning", href: "/shipments/planning" },
-        { label: "Tendering" }
-      ]}
-    >
+  
       <div className="p-6 space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-4">
@@ -521,6 +514,5 @@ export default function CarrierTendering() {
           </TabsContent>
         </Tabs>
       </div>
-    </TmsLayout>
   );
 }

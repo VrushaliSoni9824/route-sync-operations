@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ShipmentPlanningForm } from "./ShipmentPlanningForm";
+import { CarrierTenderingUi } from "./CarrierTenderingUi"
 import { 
-  Truck, 
+  Truck,
   Package, 
   MapPin, 
   Clock, 
@@ -144,139 +146,13 @@ export default function ShipmentPlanning() {
             <TabsTrigger value="orders">Order Selection</TabsTrigger>
             <TabsTrigger value="shipments">Active Shipments</TabsTrigger>
             <TabsTrigger value="route">Route Planning</TabsTrigger>
+            <TabsTrigger value="Carrier">Carrier Assignment</TabsTrigger>
+
           </TabsList>
 
           {/* Order Selection Tab */}
           <TabsContent value="orders" className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              {/* Unplanned Orders */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Package className="h-5 w-5" />
-                      Unplanned Orders ({unplannedOrders.length})
-                    </div>
-                    <Button size="sm" variant="outline">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Auto-Suggest
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {unplannedOrders.map((order) => (
-                      <div key={order.id} className="border rounded-lg p-3 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            checked={selectedOrders.includes(order.id)}
-                            onCheckedChange={(checked) => handleSelectOrder(order.id, checked as boolean)}
-                          />
-                          <span className="font-medium text-primary">{order.id}</span>
-                          <Badge variant={order.priority === "High" ? "destructive" : "secondary"}>
-                            {order.priority}
-                          </Badge>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          <div>{order.customer}</div>
-                          <div className="flex items-center gap-1 mt-1">
-                            <MapPin className="h-3 w-3" />
-                            {order.origin} → {order.destination}
-                          </div>
-                          <div className="flex items-center gap-4 mt-1">
-                            <span>{order.weight}</span>
-                            <span>{order.pallets} pallets</span>
-                            <span>{order.equipment}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Shipment Builder */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Truck className="h-5 w-5" />
-                    New Shipment
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {selectedOrders.length > 0 && (
-                    <div>
-                      <Label>Selected Orders ({selectedOrders.length})</Label>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {selectedOrders.map((orderId) => (
-                          <Badge key={orderId} variant="secondary">
-                            {orderId}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <Label htmlFor="equipment">Equipment Type</Label>
-                    <Select value={newShipment.equipmentType} onValueChange={(value) => 
-                      setNewShipment(prev => ({ ...prev, equipmentType: value }))
-                    }>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select equipment" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="dry-van-53">Dry Van 53'</SelectItem>
-                        <SelectItem value="reefer-53">Reefer 53'</SelectItem>
-                        <SelectItem value="flatbed-48">Flatbed 48'</SelectItem>
-                        <SelectItem value="step-deck">Step Deck</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="execution">Execution Mode</Label>
-                    <Select value={newShipment.executionMode} onValueChange={(value) => 
-                      setNewShipment(prev => ({ ...prev, executionMode: value }))
-                    }>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select mode" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="asset">Asset-Based</SelectItem>
-                        <SelectItem value="brokered">Brokered</SelectItem>
-                        <SelectItem value="hybrid">Hybrid</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="service">Service Level</Label>
-                    <Select value={newShipment.serviceLevel} onValueChange={(value) => 
-                      setNewShipment(prev => ({ ...prev, serviceLevel: value }))
-                    }>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select service" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="standard">Standard</SelectItem>
-                        <SelectItem value="expedited">Expedited</SelectItem>
-                        <SelectItem value="white-glove">White Glove</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Button 
-                    onClick={createShipment} 
-                    disabled={selectedOrders.length === 0}
-                    className="w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Shipment
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+           {ShipmentPlanningForm()}
           </TabsContent>
 
           {/* Active Shipments Tab */}
@@ -405,6 +281,9 @@ export default function ShipmentPlanning() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+          <TabsContent value="Carrier" className="space-y-6">
+                    {CarrierTenderingUi()}
           </TabsContent>
         </Tabs>
       </div>

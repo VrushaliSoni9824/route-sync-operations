@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Link } from "react-router-dom";
 
 // Sample data - in real app this would come from API
 const orders = [
@@ -147,18 +148,6 @@ export function OrderList() {
             </SelectContent>
           </Select>
 
-          <Select value={divisionFilter} onValueChange={setDivisionFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Division" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Divisions</SelectItem>
-              <SelectItem value="West">West</SelectItem>
-              <SelectItem value="East">East</SelectItem>
-              <SelectItem value="Central">Central</SelectItem>
-              <SelectItem value="South">South</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="flex items-center gap-2">
@@ -184,9 +173,11 @@ export function OrderList() {
             Import
           </Button>
           
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Order
+          <Button asChild>
+            <Link to="/orders/create">
+              <Plus className="h-4 w-4 mr-2" />
+              New Order
+            </Link>
           </Button>
         </div>
       </div>
@@ -255,7 +246,7 @@ export function OrderList() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                        <DropdownMenuItem><Link to="/orders/SHP-001">View Details</Link></DropdownMenuItem>
                         <DropdownMenuItem>Edit Order</DropdownMenuItem>
                         <DropdownMenuItem>Duplicate</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">Cancel Order</DropdownMenuItem>
