@@ -22,8 +22,10 @@ import {
   Link as LinkIcon,
   Route,
   Settings,
-  GripVertical
+  GripVertical,
+  MousePointer
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // Sample unplanned orders
 const unplannedOrders = [
@@ -87,6 +89,7 @@ const existingShipments = [
 ];
 
 export default function ShipmentPlanning() {
+  const navigate = useNavigate();
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [newShipment, setNewShipment] = useState({
     equipmentType: "",
@@ -141,6 +144,22 @@ export default function ShipmentPlanning() {
       ]}
     >
       <div className="p-6 space-y-6">
+        {/* Planning Mode Toggle */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">Planning Interface</h2>
+            <Badge variant="outline">Standard View</Badge>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/shipments/planning/drag-drop")}
+            className="flex items-center gap-2"
+          >
+            <MousePointer className="h-4 w-4" />
+            Switch to Drag & Drop Planning
+          </Button>
+        </div>
+
         <Tabs defaultValue="orders" className="space-y-6">
           <TabsList>
             <TabsTrigger value="orders">Order Selection</TabsTrigger>
