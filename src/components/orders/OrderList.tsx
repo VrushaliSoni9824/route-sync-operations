@@ -14,9 +14,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-// Sample data - in real app this would come from API
 const orders = [
   {
     id: "ORD-001",
@@ -29,7 +28,8 @@ const orders = [
     origin: "Los Angeles, CA",
     destination: "Phoenix, AZ",
     weight: "15,000 lbs",
-    value: "$2,850.00"
+    value: "$2,850.00",
+    trip: "N/A"
   },
   {
     id: "ORD-002", 
@@ -42,7 +42,8 @@ const orders = [
     origin: "Atlanta, GA",
     destination: "Miami, FL", 
     weight: "22,500 lbs",
-    value: "$3,200.00"
+    value: "$3,200.00",
+     trip: "N/A"
   },
   {
     id: "ORD-003",
@@ -55,7 +56,8 @@ const orders = [
     origin: "Chicago, IL",
     destination: "Denver, CO",
     weight: "18,750 lbs", 
-    value: "$4,100.00"
+    value: "$4,100.00",
+    trip: "N/A"
   },
   {
     id: "ORD-004",
@@ -68,7 +70,8 @@ const orders = [
     origin: "Seattle, WA",
     destination: "Portland, OR",
     weight: "12,000 lbs",
-    value: "$1,950.00"
+    value: "$1,950.00",
+    trip: "N/A"
   },
   {
     id: "ORD-005",
@@ -81,15 +84,20 @@ const orders = [
     origin: "Houston, TX", 
     destination: "Dallas, TX",
     weight: "8,500 lbs",
-    value: "$1,200.00"
+    value: "$1,200.00",
+    trip: "N/A"
   }
 ];
+
 
 export function OrderList() {
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [divisionFilter, setDivisionFilter] = useState<string>("all");
+  const [drawerOrder, setDrawerOrder] = useState<typeof orders[0] | null>(null);
+  const navigate = useNavigate();
+  let clickTimeout: NodeJS.Timeout;
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -113,13 +121,13 @@ export function OrderList() {
                          order.poNumber.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
     const matchesDivision = divisionFilter === "all" || order.division === divisionFilter;
-    
+
     return matchesSearch && matchesStatus && matchesDivision;
   });
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header Actions */}
+      {/* Header and filters... */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
@@ -190,7 +198,7 @@ export function OrderList() {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
+            <TableRow>
                 <TableHead className="w-12">
                   <Checkbox
                     checked={selectedOrders.length === orders.length}
@@ -200,19 +208,28 @@ export function OrderList() {
                 <TableHead>Order ID</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>PO Number</TableHead>
-                <TableHead>Pickup Date</TableHead>
-                <TableHead>Delivery Date</TableHead>
                 <TableHead>Route</TableHead>
                 <TableHead>Weight</TableHead>
                 <TableHead>Value</TableHead>
+                <TableHead>Trip</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Division</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredOrders.map((order) => (
-                <TableRow key={order.id} className="cursor-pointer hover:bg-muted/50">
+                <TableRow
+                  key={order.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => {
+                    clearTimeout(clickTimeout);
+                    clickTimeout = setTimeout(() => setDrawerOrder(order), 200);
+                  }}
+                  onDoubleClick={() => {
+                    clearTimeout(clickTimeout);
+                    navigate(`/orders/${order.id}`);
+                  }}
+                >
                   <TableCell>
                     <Checkbox
                       checked={selectedOrders.includes(order.id)}
@@ -222,8 +239,6 @@ export function OrderList() {
                   <TableCell className="font-medium text-primary">{order.id}</TableCell>
                   <TableCell>{order.customer}</TableCell>
                   <TableCell>{order.poNumber}</TableCell>
-                  <TableCell>{order.pickupDate}</TableCell>
-                  <TableCell>{order.deliveryDate}</TableCell>
                   <TableCell>
                     <div className="text-sm">
                       <div>{order.origin}</div>
@@ -232,12 +247,11 @@ export function OrderList() {
                   </TableCell>
                   <TableCell>{order.weight}</TableCell>
                   <TableCell className="font-medium">{order.value}</TableCell>
+                  <TableCell className="font-medium">{order.trip}</TableCell>
                   <TableCell>
                     <StatusBadge status={order.status} />
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{order.division}</Badge>
-                  </TableCell>
+                 
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -260,23 +274,31 @@ export function OrderList() {
         </CardContent>
       </Card>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          Showing {filteredOrders.length} of {orders.length} orders
+      {/* Drawer Backdrop */}
+      {drawerOrder && (
+        <div className="fixed inset-0 bg-black/20 z-40" onClick={() => setDrawerOrder(null)}></div>
+      )}
+
+      {/* Slide-Out Drawer */}
+      {drawerOrder && (
+        <div className="fixed top-0 right-0 w-[400px] h-full bg-white shadow-xl z-50 border-l overflow-y-auto">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-lg font-semibold">Order Details</h2>
+            <Button variant="ghost" onClick={() => setDrawerOrder(null)}>Close</Button>
+          </div>
+          <div className="p-4 space-y-2 text-sm">
+            <div><strong>Order ID:</strong> {drawerOrder.id}</div>
+            <div><strong>Customer:</strong> {drawerOrder.customer}</div>
+            <div><strong>PO Number:</strong> {drawerOrder.poNumber}</div>
+            <div><strong>Status:</strong> {drawerOrder.status}</div>
+            <div><strong>Pickup:</strong> {drawerOrder.pickupDate} – {drawerOrder.origin}</div>
+            <div><strong>Delivery:</strong> {drawerOrder.deliveryDate} – {drawerOrder.destination}</div>
+            <div><strong>Weight:</strong> {drawerOrder.weight}</div>
+            <div><strong>Value:</strong> {drawerOrder.value}</div>
+            <div><strong>Trip:</strong> {drawerOrder.trip}</div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
-            Previous
-          </Button>
-          <Button variant="outline" size="sm">
-            1
-          </Button>
-          <Button variant="outline" size="sm" disabled>
-            Next
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -1,13 +1,18 @@
 
 import { TmsLayout } from "@/components/TmsLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { TmsMap } from "@/components/maps/TmsMap";
 import { Separator } from "@/components/ui/separator";
-import { FileText, MapPin, Truck, Clock, User, Edit, X, CheckCircle } from "lucide-react";
+import { FileText, MapPin, Truck, Clock, User, Edit, X, CheckCircle, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+
+// import { CommodityFormSection } from "@/components/orders/CommodityFormSection";
 
 // Sample order data - in real app this would come from API/router params
 const orderData = {
@@ -135,6 +140,86 @@ export default function OrderDetail() {
     { key: "delivered", label: "Delivered", icon: CheckCircle },
     { key: "closed", label: "Closed", icon: FileText }
   ];
+
+  function CommodityFormSection() {
+    const [commodities, setCommodities] = useState([
+      { description: "", pallets: "", weight: "", length: "" }
+    ]);
+  
+    const addCommodity = () => {
+      setCommodities([...commodities, { description: "", pallets: "", weight: "", length: "" }]);
+    };
+  
+    const removeCommodity = (index: number) => {
+      const updated = [...commodities];
+      updated.splice(index, 1);
+      setCommodities(updated);
+    };
+  
+    const handleChange = (index: number, field: string, value: string) => {
+      const updated = [...commodities];
+      updated[index][field] = value;
+      setCommodities(updated);
+    };
+  
+    return (
+      <>
+          {commodities.map((item, index) => (
+            <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+              <div className="space-y-2">
+                <Label>Description *</Label>
+                <Input
+                  placeholder="e.g., Electronics"
+                  value={item.description}
+                  onChange={(e) => handleChange(index, "description", e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Pallets</Label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={item.pallets}
+                  onChange={(e) => handleChange(index, "pallets", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Weight (lbs) *</Label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={item.weight}
+                  onChange={(e) => handleChange(index, "weight", e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex items-end space-x-2">
+                <Input
+                  type="number"
+                  placeholder="Length (ft)"
+                  value={item.length}
+                  onChange={(e) => handleChange(index, "length", e.target.value)}
+                />
+                {commodities.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => removeCommodity(index)}
+                    className="text-red-500"
+                  >
+                    <Trash2 className=" w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))} 
+          <Button type="button" variant="outline" onClick={addCommodity}>
+            + Add Another Commodity
+          </Button>
+          </>
+    );
+  }
   return (
     <TmsLayout 
       title="Order Details"
@@ -170,7 +255,7 @@ export default function OrderDetail() {
           </div>
         </div>
         <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-2">
           <div className="flex items-center justify-between">
             {statusSteps.map((step, index) => {
               const isCompleted = index < getCurrentStepIndex();
@@ -205,6 +290,7 @@ export default function OrderDetail() {
         <Tabs defaultValue="summary" className="space-y-6">
           <TabsList>
             <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="quote">Quote</TabsTrigger>
             <TabsTrigger value="stops">Stops & Route</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="audit">Audit Trail</TabsTrigger>
@@ -212,7 +298,9 @@ export default function OrderDetail() {
 
           {/* Summary Tab */}
           <TabsContent value="summary">
-            <div className="grid grid-cols-3 gap-6">
+          <div className="space-y-4">
+
+            <div className="grid grid-cols-4 gap-4">
               {/* Order Information */}
               <Card>
                 <CardHeader>
@@ -251,49 +339,6 @@ export default function OrderDetail() {
                 </CardContent>
               </Card>
 
-              {/* Freight Details */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Truck className="h-5 w-5" />
-                    Freight Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Pallets:</span>
-                      <p>{orderData.freight.pallets}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium">Weight:</span>
-                      <p>{orderData.freight.weight}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium">Commodity:</span>
-                      <p>{orderData.freight.commodity}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium">Dimensions:</span>
-                      <p>{orderData.freight.dimensions}</p>
-                    </div>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <span className="font-medium text-sm">Accessorials:</span>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {orderData.accessorials.map((accessorial) => (
-                        <Badge key={accessorial} variant="secondary" className="text-xs">
-                          {accessorial}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Addresses */}
               <Card>
                 <CardHeader>
@@ -326,8 +371,106 @@ export default function OrderDetail() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
 
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Truck className="h-5 w-5" />
+                    Additional Info
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Label:</span>
+                      <p>Value</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Label:</span>
+                      <p>Value</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Label:</span>
+                      <p>Value</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Label:</span>
+                      <p>Value</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                      Special Instructions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                <p className="text-sm">{orderData.specialInstructions}</p>
+                  <Separator />
+                  
+                  <div>
+                    <span className="font-medium text-sm">Internal Notes:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                    <p className="text-sm">{orderData.internalNotes}</p>
+
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>              
+             
+            </div>
+            <div className="grid grid-cols-1 gap-6">
+
+              {/* Freight Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Truck className="h-5 w-5" />
+                    Freight Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Pallets:</span>
+                      <p>{orderData.freight.pallets}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Weight:</span>
+                      <p>{orderData.freight.weight}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Commodity:</span>
+                      <p>{orderData.freight.commodity}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Dimensions:</span>
+                      <p>{orderData.freight.dimensions}</p>
+                    </div>
+                  </div>
+
+                  <Separator/>
+
+                  <CommodityFormSection/>
+                  
+                  <Separator />
+                  
+                  <div>
+                    <span className="font-medium text-sm">Accessorials:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {orderData.accessorials.map((accessorial) => (
+                        <Badge key={accessorial} variant="secondary" className="text-xs">
+                          {accessorial}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
             {/* Notes */}
             <div className="grid grid-cols-2 gap-6">
               <Card>
@@ -348,54 +491,62 @@ export default function OrderDetail() {
                 </CardContent>
               </Card>
             </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="quote">
           </TabsContent>
 
           {/* Stops & Route Tab */}
           <TabsContent value="stops">
-            <div className="space-y-6">
-              <TmsMap locations={mapLocations} showRoutes={true} />
-              
-              <div className="grid grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-green-500 rounded-full" />
-                      Pickup Stop
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <p className="font-medium">{orderData.origin.address}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {orderData.origin.city}, {orderData.origin.state} {orderData.origin.zip}
-                    </p>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="h-4 w-4" />
-                      <span>Scheduled: {orderData.pickupDate} 08:00 - 17:00</span>
-                    </div>
-                  </CardContent>
-                </Card>
+  <div className="grid grid-cols-2 gap-6">
+    {/* Left: Map (50%) */}
+    <div>
+      <TmsMap locations={mapLocations} showRoutes={true} />
+    </div>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-red-500 rounded-full" />
-                      Delivery Stop
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <p className="font-medium">{orderData.destination.address}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {orderData.destination.city}, {orderData.destination.state} {orderData.destination.zip}
-                    </p>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="h-4 w-4" />
-                      <span>Scheduled: {orderData.deliveryDate} 08:00 - 17:00</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
+    {/* Right: Stop Cards (50%) */}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full" />
+            Pickup Stop
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="font-medium">{orderData.origin.address}</p>
+          <p className="text-sm text-muted-foreground">
+            {orderData.origin.city}, {orderData.origin.state} {orderData.origin.zip}
+          </p>
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="h-4 w-4" />
+            <span>Scheduled: {orderData.pickupDate} 08:00 - 17:00</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-red-500 rounded-full" />
+            Delivery Stop
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="font-medium">{orderData.destination.address}</p>
+          <p className="text-sm text-muted-foreground">
+            {orderData.destination.city}, {orderData.destination.state} {orderData.destination.zip}
+          </p>
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="h-4 w-4" />
+            <span>Scheduled: {orderData.deliveryDate} 08:00 - 17:00</span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+</TabsContent>
 
           {/* Documents Tab */}
           <TabsContent value="documents">
