@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit, Truck, MapPin, Package, Clock, Route, DollarSign } from "lucide-react";
@@ -252,6 +253,16 @@ const getStopStatusBadge = (status: string) => {
   return <StatusBadge status={statusMap[status] || "planned"} />;
 };
 
+const getTripStatusBadge = (status: string) => {
+  const statusMap: Record<string, any> = {
+    "in-progress": "in-transit",
+    "completed": "delivered",
+    "planned": "planned",
+    "dispatched": "tendered"
+  };
+  return <StatusBadge status={statusMap[status] || "planned"} />;
+};
+
 export function ShipmentDetailView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -390,7 +401,7 @@ export function ShipmentDetailView() {
                       {trips.map((trip) => (
                         <div key={trip.id} className="flex items-center space-x-2 p-2 border rounded">
                           <span className="text-sm font-medium">{trip.id}</span>
-                          <StatusBadge status={trip.status === "in-progress" ? "in-transit" : trip.status} />
+                          {getTripStatusBadge(trip.status)}
                         </div>
                       ))}
                     </div>
