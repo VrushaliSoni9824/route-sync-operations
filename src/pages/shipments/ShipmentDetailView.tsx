@@ -38,39 +38,39 @@ const sampleShipment = {
   stops: [
     {
       id: "1",
-      type: "pickup",
+      type: "pickup" as const,
       sequence: 1,
       location: "ACME Warehouse",
       address: "123 Industrial Blvd, Brooklyn, NY 11201",
       timeWindow: "08:00 - 12:00",
       actualTime: "09:15",
-      status: "completed",
+      status: "completed" as const,
       orderId: "ORD-001",
       contact: "Mike Johnson",
       phone: "(555) 987-6543"
     },
     {
       id: "2", 
-      type: "pickup",
+      type: "pickup" as const,
       sequence: 2,
       location: "ACME Distribution",
       address: "456 Warehouse Ave, Queens, NY 11375",
       timeWindow: "13:00 - 17:00",
       actualTime: "14:30",
-      status: "completed",
+      status: "completed" as const,
       orderId: "ORD-002",
       contact: "Sarah Smith",
       phone: "(555) 456-7890"
     },
     {
       id: "3",
-      type: "delivery",
+      type: "delivery" as const,
       sequence: 3,
       location: "Boston Regional DC",
       address: "789 Commerce St, Boston, MA 02101",
       timeWindow: "08:00 - 17:00",
       actualTime: null,
-      status: "in-transit",
+      status: "scheduled" as const,
       orderId: "ORD-001,ORD-002",
       contact: "Tom Wilson",
       phone: "(555) 234-5678"
@@ -131,8 +131,8 @@ const sampleTrips = [
 const getStopStatusBadge = (status: string) => {
   const statusMap: Record<string, any> = {
     completed: "delivered",
-    "in-transit": "in-transit", 
-    pending: "planned"
+    scheduled: "planned",
+    skipped: "cancelled"
   };
   return <StatusBadge status={statusMap[status] || "planned"} />;
 };

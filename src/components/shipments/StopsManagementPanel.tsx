@@ -286,11 +286,11 @@ interface StopFormProps {
 
 function StopForm({ initialStop, onSubmit, onCancel }: StopFormProps) {
   const [formData, setFormData] = useState({
-    type: initialStop?.type || "pickup",
+    type: initialStop?.type || "pickup" as const,
     location: initialStop?.location || "",
     address: initialStop?.address || "",
     timeWindow: initialStop?.timeWindow || "",
-    status: initialStop?.status || "scheduled",
+    status: initialStop?.status || "scheduled" as const,
     orderId: initialStop?.orderId || "",
     contact: initialStop?.contact || "",
     phone: initialStop?.phone || "",
@@ -310,7 +310,7 @@ function StopForm({ initialStop, onSubmit, onCancel }: StopFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label>Stop Type</Label>
-        <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value})}>
+        <Select value={formData.type} onValueChange={(value: "pickup" | "delivery" | "terminal" | "customs") => setFormData({...formData, type: value})}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>

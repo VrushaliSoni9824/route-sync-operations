@@ -295,8 +295,8 @@ function TripForm({ initialTrip, onSubmit, onCancel }: TripFormProps) {
     trailerId: initialTrip?.trailerId || "",
     stopCount: initialTrip?.stopCount || 2,
     eta: initialTrip?.eta || "",
-    status: initialTrip?.status || "planned",
-    executionMode: initialTrip?.executionMode || "asset",
+    status: initialTrip?.status || "planned" as const,
+    executionMode: initialTrip?.executionMode || "asset" as const,
     notes: initialTrip?.notes || "",
     assignedStops: initialTrip?.assignedStops || []
   });
@@ -306,8 +306,7 @@ function TripForm({ initialTrip, onSubmit, onCancel }: TripFormProps) {
     setFormData({
       ...formData,
       driverId,
-      driverName: driver?.name || "",
-      driverPhoto: driver?.photo
+      driverName: driver?.name || ""
     });
   };
 
@@ -395,7 +394,7 @@ function TripForm({ initialTrip, onSubmit, onCancel }: TripFormProps) {
 
       <div>
         <Label>Execution Mode</Label>
-        <Select value={formData.executionMode} onValueChange={(value) => setFormData({...formData, executionMode: value})}>
+        <Select value={formData.executionMode} onValueChange={(value: "asset" | "brokered") => setFormData({...formData, executionMode: value})}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
