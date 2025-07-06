@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TmsLayout } from "@/components/TmsLayout";
-
-// import { StatusBadge } from "./StatusBadge";
 import { StatusBadge } from "./StatusBadge";
+import { StopsManagementPanel } from "@/components/shipments/StopsManagementPanel";
+import { TripManagementTab } from "@/components/shipments/TripManagementTab";
+
 const sampleShipment = {
   id: "SHP-001",
   orders: [
@@ -110,6 +111,23 @@ const sampleShipment = {
   }
 };
 
+const sampleTrips = [
+  {
+    id: "TRIP-001",
+    driverId: "D001",
+    driverName: "John Doe",
+    driverPhoto: "/api/placeholder/32/32",
+    truckId: "T-4567",
+    trailerId: "TR-8901",
+    stopCount: 3,
+    eta: "2024-01-15 18:00",
+    status: "in-progress" as const,
+    executionMode: "asset" as const,
+    notes: "Driver has experience with this route",
+    assignedStops: ["Stop 1", "Stop 2", "Stop 3"]
+  }
+];
+
 const getStopStatusBadge = (status: string) => {
   const statusMap: Record<string, any> = {
     completed: "delivered",
@@ -122,6 +140,8 @@ const getStopStatusBadge = (status: string) => {
 export function ShipmentDetailView() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [stops, setStops] = useState(sampleShipment.stops);
+  const [trips, setTrips] = useState(sampleTrips);
 
   return (
      <TmsLayout 
@@ -161,7 +181,8 @@ export function ShipmentDetailView() {
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="stops">Stops & Route</TabsTrigger>
+          <TabsTrigger value="stops">Stops Management</TabsTrigger>
+          <TabsTrigger value="trips">Trip Management</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="costs">Costs</TabsTrigger>
         </TabsList>
@@ -338,59 +359,11 @@ export function ShipmentDetailView() {
         </TabsContent>
 
         <TabsContent value="stops" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Stop Sequence</CardTitle>
-              <CardDescription>Planned route with pickup and delivery stops</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {sampleShipment.stops.map((stop, index) => (
-                  <div key={stop.id} className="flex items-start space-x-4 p-4 border rounded-lg">
-                    <div className="flex flex-col items-center">
-                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                        {stop.sequence}
-                      </div>
-                      {index < sampleShipment.stops.length - 1 && (
-                        <div className="w-0.5 h-12 bg-muted mt-2"></div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <h4 className="font-medium">{stop.location}</h4>
-                          <Badge variant="outline" className="capitalize">{stop.type}</Badge>
-                          {getStopStatusBadge(stop.status)}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {stop.actualTime || stop.timeWindow}
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">{stop.address}</p>
-                      <div className="grid grid-cols-2 gap-4 text-xs">
-                        <div>
-                          <span className="text-muted-foreground">Contact: </span>
-                          <span>{stop.contact}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Phone: </span>
-                          <span>{stop.phone}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Order: </span>
-                          <span>{stop.orderId}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Window: </span>
-                          <span>{stop.timeWindow}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <StopsManagementPanel stops={stops} onStopsUpdate={setStops} />
+        </TabsContent>
+
+        <TabsContent value="trips" className="space-y-6">
+          <TripManagementTab trips={trips} onTripsUpdate={setTrips} />
         </TabsContent>
 
         <TabsContent value="timeline" className="space-y-6">
