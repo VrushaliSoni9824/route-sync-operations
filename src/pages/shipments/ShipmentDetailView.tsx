@@ -7,9 +7,42 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TmsLayout } from "@/components/TmsLayout";
-import { StatusBadge } from "./StatusBadge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { StatusStepper } from "@/components/ui/status-stepper";
+import { ExceptionBanner } from "@/components/ui/exception-banner";
+import { Timeline } from "@/components/ui/timeline";
 import { StopsManagementPanel } from "@/components/shipments/StopsManagementPanel";
 import { TripManagementTab } from "@/components/shipments/TripManagementTab";
+
+interface Stop {
+  id: string;
+  type: "pickup" | "delivery" | "terminal" | "customs";
+  sequence: number;
+  location: string;
+  address: string;
+  timeWindow: string;
+  actualTime?: string | null;
+  status: "scheduled" | "completed" | "skipped";
+  orderId: string;
+  contact: string;
+  phone: string;
+  notes?: string;
+}
+
+interface Trip {
+  id: string;
+  driverId?: string;
+  driverName?: string;
+  driverPhoto?: string;
+  truckId?: string;
+  trailerId?: string;
+  stopCount: number;
+  eta: string;
+  status: "planned" | "dispatched" | "in-progress" | "completed";
+  executionMode: "asset" | "brokered";
+  notes?: string;
+  assignedStops: string[];
+}
 
 const sampleShipment = {
   id: "SHP-001",
@@ -75,7 +108,7 @@ const sampleShipment = {
       contact: "Tom Wilson",
       phone: "(555) 234-5678"
     }
-  ],
+  ] as Stop[],
   legs: [
     {
       id: "LEG-001",
@@ -97,11 +130,56 @@ const sampleShipment = {
     }
   ],
   timeline: [
-    { time: "2024-01-15 08:00", event: "Shipment created", description: "Orders consolidated into shipment" },
-    { time: "2024-01-15 08:30", event: "Driver assigned", description: "John Doe assigned to shipment" },
-    { time: "2024-01-15 09:15", event: "First pickup completed", description: "Pickup at ACME Warehouse" },
-    { time: "2024-01-15 14:30", event: "Second pickup completed", description: "Pickup at ACME Distribution" },
-    { time: "2024-01-15 15:00", event: "En route to delivery", description: "Heading to Boston Regional DC" }
+    { 
+      id: "1",
+      time: "2024-01-15 08:00", 
+      timestamp: "2024-01-15 08:00",
+      event: "Shipment created", 
+      description: "Orders consolidated into shipment",
+      actor: { type: "user" as const, name: "Sarah Connor", id: "U001" },
+      trigger: "Manual Entry",
+      eventType: "status_change" as const
+    },
+    { 
+      id: "2",
+      time: "2024-01-15 08:30", 
+      timestamp: "2024-01-15 08:30",
+      event: "Driver assigned", 
+      description: "John Doe assigned to shipment",
+      actor: { type: "user" as const, name: "Dispatch Team", id: "U002" },
+      trigger: "TMS Assignment",
+      eventType: "assignment" as const
+    },
+    { 
+      id: "3",
+      time: "2024-01-15 09:15", 
+      timestamp: "2024-01-15 09:15",
+      event: "First pickup completed", 
+      description: "Pickup at ACME Warehouse",
+      actor: { type: "driver" as const, name: "John Doe", id: "D001" },
+      trigger: "Mobile App",
+      eventType: "status_change" as const
+    },
+    { 
+      id: "4",
+      time: "2024-01-15 14:30", 
+      timestamp: "2024-01-15 14:30",
+      event: "Second pickup completed", 
+      description: "Pickup at ACME Distribution",
+      actor: { type: "driver" as const, name: "John Doe", id: "D001" },
+      trigger: "Mobile App",
+      eventType: "status_change" as const
+    },
+    { 
+      id: "5",
+      time: "2024-01-15 15:00", 
+      timestamp: "2024-01-15 15:00",
+      event: "En route to delivery", 
+      description: "Heading to Boston Regional DC",
+      actor: { type: "system" as const, name: "GPS Tracking", id: "SYS001" },
+      trigger: "Auto Update",
+      eventType: "api_update" as const
+    }
   ],
   costs: {
     baserate: 1850,
@@ -111,7 +189,7 @@ const sampleShipment = {
   }
 };
 
-const sampleTrips = [
+const sampleTrips: Trip[] = [
   {
     id: "TRIP-001",
     driverId: "D001",
@@ -128,6 +206,43 @@ const sampleTrips = [
   }
 ];
 
+// Status stepper configuration
+const statusSteps = [
+  {
+    id: "created",
+    label: "Created",
+    status: "completed" as const,
+    timestamp: "Jan 15, 8:00 AM",
+    description: "Order received"
+  },
+  {
+    id: "planned",
+    label: "Planned",
+    status: "completed" as const,
+    timestamp: "Jan 15, 8:30 AM",
+    description: "Route optimized"
+  },
+  {
+    id: "in-transit",
+    label: "In Transit",
+    status: "active" as const,
+    timestamp: "Jan 15, 3:00 PM",
+    description: "En route"
+  },
+  {
+    id: "delivered",
+    label: "Delivered",
+    status: "upcoming" as const,
+    description: "ETA 6:00 PM"
+  },
+  {
+    id: "closed",
+    label: "Closed",
+    status: "upcoming" as const,
+    description: "Pending POD"
+  }
+];
+
 const getStopStatusBadge = (status: string) => {
   const statusMap: Record<string, any> = {
     completed: "delivered",
@@ -140,8 +255,17 @@ const getStopStatusBadge = (status: string) => {
 export function ShipmentDetailView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [stops, setStops] = useState(sampleShipment.stops);
-  const [trips, setTrips] = useState(sampleTrips);
+  const [stops, setStops] = useState<Stop[]>(sampleShipment.stops);
+  const [trips, setTrips] = useState<Trip[]>(sampleTrips);
+  const [showExceptionBanner, setShowExceptionBanner] = useState(true);
+
+  const handleStopsUpdate = (updatedStops: Stop[]) => {
+    setStops(updatedStops);
+  };
+
+  const handleTripsUpdate = (updatedTrips: Trip[]) => {
+    setTrips(updatedTrips);
+  };
 
   return (
      <TmsLayout 
@@ -151,6 +275,33 @@ export function ShipmentDetailView() {
           ]}
         >
     <div className="space-y-6">
+      {/* Exception Banner */}
+      {showExceptionBanner && (
+        <ExceptionBanner
+          type="attention-required"
+          title="Delivery Window At Risk"
+          summary="Current ETA (6:00 PM) exceeds customer delivery window (5:00 PM) by 1 hour"
+          details={{
+            reason: "Traffic delays due to construction on I-95",
+            location: "Boston, MA approach",
+            timestamp: "Jan 15, 4:30 PM",
+            impact: "Potential customer service escalation and delivery fee",
+            suggestedAction: "Contact customer to negotiate extended delivery window or expedite route"
+          }}
+          onDismiss={() => setShowExceptionBanner(false)}
+        />
+      )}
+
+      {/* Status Stepper */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Shipment Progress</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StatusStepper steps={statusSteps} />
+        </CardContent>
+      </Card>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -225,27 +376,67 @@ export function ShipmentDetailView() {
                 </CardContent>
               </Card>
 
-              {/* Linked Orders */}
+              {/* Visual Status Propagation */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Linked Orders</CardTitle>
-                  <CardDescription>Orders consolidated in this shipment</CardDescription>
+                  <CardTitle>Status Overview</CardTitle>
+                  <CardDescription>Hierarchical status view across all levels</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {sampleShipment.orders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <span className="font-medium">{order.id}</span>
-                        <p className="text-sm text-muted-foreground">{order.customer}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">PO: {order.poNumber}</p>
-                        <Button variant="link" size="sm" className="p-0 h-auto">
-                          View Details
-                        </Button>
-                      </div>
+                <CardContent className="space-y-4">
+                  {/* Trips Status */}
+                  <div>
+                    <h4 className="font-medium mb-2">Trips</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {trips.map((trip) => (
+                        <div key={trip.id} className="flex items-center space-x-2 p-2 border rounded">
+                          <span className="text-sm font-medium">{trip.id}</span>
+                          <StatusBadge status={trip.status === "in-progress" ? "in-transit" : trip.status} />
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                  
+                  <Separator />
+                  
+                  {/* Stops Status */}
+                  <div>
+                    <h4 className="font-medium mb-2">Stops</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {stops.map((stop) => (
+                        <div key={stop.id} className="flex items-center justify-between p-2 border rounded">
+                          <div className="flex items-center space-x-2">
+                            <span className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs">
+                              {stop.sequence}
+                            </span>
+                            <span className="text-sm">{stop.location}</span>
+                          </div>
+                          {getStopStatusBadge(stop.status)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  {/* Orders Status */}
+                  <div>
+                    <h4 className="font-medium mb-2">Linked Orders</h4>
+                    <div className="space-y-2">
+                      {sampleShipment.orders.map((order) => (
+                        <div key={order.id} className="flex items-center justify-between p-2 border rounded">
+                          <div>
+                            <span className="font-medium">{order.id}</span>
+                            <p className="text-sm text-muted-foreground">{order.customer}</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Badge variant="outline" className="bg-green-100 text-green-800">
+                              Awaiting POD
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -359,34 +550,21 @@ export function ShipmentDetailView() {
         </TabsContent>
 
         <TabsContent value="stops" className="space-y-6">
-          <StopsManagementPanel stops={stops} onStopsUpdate={setStops} />
+          <StopsManagementPanel stops={stops} onStopsUpdate={handleStopsUpdate} />
         </TabsContent>
 
         <TabsContent value="trips" className="space-y-6">
-          <TripManagementTab trips={trips} onTripsUpdate={setTrips} />
+          <TripManagementTab trips={trips} onTripsUpdate={handleTripsUpdate} />
         </TabsContent>
 
         <TabsContent value="timeline" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Shipment Timeline</CardTitle>
-              <CardDescription>Complete activity history and events</CardDescription>
+              <CardTitle>Audit Trail & Timeline</CardTitle>
+              <CardDescription>Complete activity history with detailed event tracking</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {sampleShipment.timeline.map((event, index) => (
-                  <div key={index} className="flex space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{event.event}</p>
-                      <p className="text-xs text-muted-foreground">{event.description}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{event.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <Timeline events={sampleShipment.timeline} />
             </CardContent>
           </Card>
         </TabsContent>
