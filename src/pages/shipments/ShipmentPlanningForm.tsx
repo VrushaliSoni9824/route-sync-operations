@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { useNavigate } from "react-router-dom";
@@ -31,6 +32,7 @@ interface Order {
   pallets: number;
   weight: number;
   equipment: string;
+  orderType: "FTL" | "LTL";
 }
 
 const availableOrders: Order[] = [
@@ -42,7 +44,8 @@ const availableOrders: Order[] = [
     destination: "Boston, MA", 
     pallets: 5,
     weight: 2500,
-    equipment: "Dry Van"
+    equipment: "Dry Van",
+    orderType: "FTL"
   },
   {
     id: "ORD-007",
@@ -52,7 +55,8 @@ const availableOrders: Order[] = [
     destination: "Hartford, CT",
     pallets: 3,
     weight: 1800,
-    equipment: "Dry Van"
+    equipment: "Dry Van",
+    orderType: "LTL"
   },
   {
     id: "ORD-008",
@@ -62,7 +66,19 @@ const availableOrders: Order[] = [
     destination: "Boston, MA",
     pallets: 7,
     weight: 3200,
-    equipment: "Dry Van"
+    equipment: "Dry Van",
+    orderType: "FTL"
+  },
+  {
+    id: "ORD-009",
+    customer: "Regional Freight",
+    poNumber: "RF456789", 
+    origin: "Springfield, MA",
+    destination: "Worcester, MA",
+    pallets: 2,
+    weight: 950,
+    equipment: "Dry Van",
+    orderType: "LTL"
   }
 ];
 
@@ -113,17 +129,45 @@ export function ShipmentPlanningForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const shipmentType = getShipmentType();
     toast({
       title: "Shipment Created Successfully", 
-      description: `Shipment with ${selectedOrders.length} orders and ${stops.length} stops has been planned.`,
+      description: `${shipmentType} shipment with ${selectedOrders.length} orders and ${stops.length} stops has been planned.`,
     });
     navigate("/shipments");
   };
 
   const isOrderCompatible = (order: Order) => {
     if (selectedOrders.length === 0) return true;
+    
     // Check equipment compatibility
-    return selectedOrders.every(selected => selected.equipment === order.equipment);
+    const equipmentCompatible = selectedOrders.every(selected => selected.equipment === order.equipment);
+    
+    // FTL orders typically shouldn't be mixed with other orders
+    const typeCompatible = selectedOrders.every(selected => {
+      if (selected.orderType === "FTL" || order.orderType === "FTL") {
+        return selected.orderType === order.orderType && selectedOrders.length === 0;
+      }
+      return true; // LTL orders can be mixed
+    });
+    
+    return equipmentCompatible && typeCompatible;
+  };
+
+  const getOrderTypeBadge = (orderType: "FTL" | "LTL") => {
+    return orderType === "FTL" 
+      ? <Badge className="bg-blue-100 text-blue-800 border-blue-200">FTL</Badge>
+      : <Badge className="bg-green-100 text-green-800 border-green-200">LTL</Badge>;
+  };
+
+  const getShipmentType = () => {
+    if (selectedOrders.length === 0) return "Unknown";
+    const ftlCount = selectedOrders.filter(o => o.orderType === "FTL").length;
+    const ltlCount = selectedOrders.filter(o => o.orderType === "LTL").length;
+    
+    if (ftlCount > 0 && ltlCount > 0) return "Mixed";
+    if (ftlCount > 0) return "FTL";
+    return "LTL";
   };
 
   const getTotalStats = () => {
@@ -131,7 +175,8 @@ export function ShipmentPlanningForm() {
       pallets: selectedOrders.reduce((sum, order) => sum + order.pallets, 0),
       weight: selectedOrders.reduce((sum, order) => sum + order.weight, 0),
       orders: selectedOrders.length,
-      stops: stops.length
+      stops: stops.length,
+      type: getShipmentType()
     };
   };
 
@@ -141,17 +186,18 @@ export function ShipmentPlanningForm() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          
           <div>
-            <h1 className="text-2xl font-bold">Plan New Shipment</h1>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-2xl font-bold">Plan New Shipment</h1>
+              {stats.type !== "Unknown" && getOrderTypeBadge(stats.type as "FTL" | "LTL")}
+            </div>
             <p className="text-muted-foreground">Consolidate orders and optimize routing</p>
           </div>
         </div>
         <div className="flex space-x-2">
-          {/* <Button variant="outline">Save as Template</Button> */}
           <Button onClick={handleSubmit}>
             <Save className="h-4 w-4 mr-2" />
-            Create Shipment
+            Create {stats.type} Shipment
           </Button>
         </div>
       </div>
@@ -188,6 +234,7 @@ export function ShipmentPlanningForm() {
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2">
                             <span className="font-medium">{order.id}</span>
+                            {getOrderTypeBadge(order.orderType)}
                             <Badge variant="outline">{order.equipment}</Badge>
                           </div>
                           <span className="text-sm text-muted-foreground">{order.customer}</span>
@@ -203,6 +250,11 @@ export function ShipmentPlanningForm() {
                           <span>{order.weight.toLocaleString()} lbs</span>
                           <span>PO: {order.poNumber}</span>
                         </div>
+                        {!isCompatible && (
+                          <div className="mt-2 text-xs text-amber-600">
+                            ⚠ Not compatible with selected orders
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -270,10 +322,17 @@ export function ShipmentPlanningForm() {
           {/* Summary Stats */}
           <Card>
             <CardHeader>
-              <CardTitle>Shipment Summary</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Shipment Summary
+                {stats.type !== "Unknown" && getOrderTypeBadge(stats.type as "FTL" | "LTL")}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="text-muted-foreground">Type</div>
+                  <div className="font-medium">{stats.type}</div>
+                </div>
                 <div>
                   <div className="text-muted-foreground">Orders</div>
                   <div className="font-medium">{stats.orders}</div>
@@ -286,11 +345,23 @@ export function ShipmentPlanningForm() {
                   <div className="text-muted-foreground">Pallets</div>
                   <div className="font-medium">{stats.pallets}</div>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <div className="text-muted-foreground">Weight</div>
                   <div className="font-medium">{stats.weight.toLocaleString()} lbs</div>
                 </div>
               </div>
+              
+              {stats.type === "FTL" && (
+                <div className="p-2 bg-blue-50 rounded text-xs text-blue-700">
+                  ℹ FTL shipments use dedicated equipment
+                </div>
+              )}
+              
+              {stats.type === "LTL" && (
+                <div className="p-2 bg-green-50 rounded text-xs text-green-700">
+                  ℹ LTL shipments share truck space with other freight
+                </div>
+              )}
             </CardContent>
           </Card>
 

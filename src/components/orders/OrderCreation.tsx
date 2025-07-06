@@ -9,12 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar, MapPin, Package, Truck, FileUp, Plus, X } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { useNavigate } from "react-router-dom";
 import { Trash2 } from "lucide-react";
 import { CommodityFormSection } from "./CommodityFormSection";
+
 interface OrderFormData {
+  // Order Type
+  orderType: "FTL" | "LTL";
+  
   // Customer Info
   customerName: string;
   poNumber: string;
@@ -70,6 +75,7 @@ const accessorialOptions = [
 export function OrderCreation() {
   const [selectedAccessorials, setSelectedAccessorials] = useState<string[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [orderType, setOrderType] = useState<"FTL" | "LTL">("FTL");
   const navigate = useNavigate();
 
   const { register, handleSubmit, formState: { errors }, watch } = useForm<OrderFormData>();
@@ -101,11 +107,10 @@ export function OrderCreation() {
   };
 
   const onSubmit = (data: OrderFormData) => {
-    console.log("Order Data:", data);
+    console.log("Order Data:", { ...data, orderType });
     console.log("Accessorials:", selectedAccessorials);
     console.log("Files:", uploadedFiles);
     // Handle form submission
-    
   };
  
   return (
@@ -117,6 +122,45 @@ export function OrderCreation() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Order Type Selection - Prominent placement at top */}
+          <Card className="border-2 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Truck className="h-5 w-5" />
+                Order Type
+              </CardTitle>
+              <CardDescription>
+                Select whether this is a Full Truckload (FTL) or Less-than-Truckload (LTL) shipment
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup
+                value={orderType}
+                onValueChange={(value: "FTL" | "LTL") => setOrderType(value)}
+                className="flex gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="FTL" id="ftl" />
+                  <Label htmlFor="ftl" className="flex items-center gap-2 cursor-pointer">
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      FTL
+                    </Badge>
+                    <span>Full Truckload - Dedicated truck for your shipment</span>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="LTL" id="ltl" />
+                  <Label htmlFor="ltl" className="flex items-center gap-2 cursor-pointer">
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      LTL
+                    </Badge>
+                    <span>Less-than-Truckload - Shared truck space</span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+
           <Tabs defaultValue="customer" className="space-y-6">
             <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="customer" className="flex items-center gap-2">
@@ -267,6 +311,11 @@ export function OrderCreation() {
                     <CardTitle className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-red-500 rounded-full" />
                       Destination Address
+                      {orderType === "LTL" && (
+                        <Badge variant="secondary" className="ml-2">
+                          Multiple stops supported
+                        </Badge>
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -310,6 +359,18 @@ export function OrderCreation() {
                         placeholder="85001"
                       />
                     </div>
+                    
+                    {orderType === "LTL" && (
+                      <div className="pt-4 border-t">
+                        <Button type="button" variant="outline" size="sm">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Additional Stop
+                        </Button>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          LTL orders can have multiple delivery locations
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -319,14 +380,58 @@ export function OrderCreation() {
             <TabsContent value="freight">
               <Card>
                 <CardHeader>
-                  <CardTitle>Freight Details</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    Freight Details
+                    <Badge variant={orderType === "FTL" ? "default" : "secondary"}>
+                      {orderType}
+                    </Badge>
+                  </CardTitle>
+                  {orderType === "LTL" && (
+                    <CardDescription>
+                      For LTL shipments, specify freight class and handling requirements
+                    </CardDescription>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-4">
-                <CommodityFormSection/>
+                  <CommodityFormSection/>
+                  
+                  {orderType === "LTL" && (
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                      <div>
+                        <Label htmlFor="freightClass">Freight Class</Label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select class" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="50">Class 50</SelectItem>
+                            <SelectItem value="55">Class 55</SelectItem>
+                            <SelectItem value="60">Class 60</SelectItem>
+                            <SelectItem value="65">Class 65</SelectItem>
+                            <SelectItem value="70">Class 70</SelectItem>
+                            <SelectItem value="77.5">Class 77.5</SelectItem>
+                            <SelectItem value="85">Class 85</SelectItem>
+                            <SelectItem value="92.5">Class 92.5</SelectItem>
+                            <SelectItem value="100">Class 100</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="stackable">Stackable</Label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select option" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="yes">Yes</SelectItem>
+                            <SelectItem value="no">No</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
                 <CardContent className="space-y-4">
-                 
-
                   <div>
                     <Label className="text-base font-medium">Accessorials</Label>
                     <div className="grid grid-cols-3 gap-2 mt-2">
@@ -366,6 +471,11 @@ export function OrderCreation() {
               <Card>
                 <CardHeader>
                   <CardTitle>Equipment Requirements</CardTitle>
+                  {orderType === "FTL" && (
+                    <CardDescription>
+                      FTL orders require dedicated equipment
+                    </CardDescription>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <div>
@@ -380,7 +490,9 @@ export function OrderCreation() {
                         <SelectItem value="flatbed">Flatbed (48')</SelectItem>
                         <SelectItem value="step-deck">Step Deck</SelectItem>
                         <SelectItem value="box-truck">Box Truck</SelectItem>
-                        <SelectItem value="ltl">LTL</SelectItem>
+                        {orderType === "LTL" && (
+                          <SelectItem value="ltl">LTL Carrier Network</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -553,7 +665,7 @@ export function OrderCreation() {
                 Cancel
               </Button>
               <Button type="submit">
-                Create Order
+                Create {orderType} Order
               </Button>
             </div>
           </div>

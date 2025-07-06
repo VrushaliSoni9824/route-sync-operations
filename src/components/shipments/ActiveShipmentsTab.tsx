@@ -7,6 +7,19 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { existingShipments } from "@/data/shipmentPlanningData";
 
 export function ActiveShipmentsTab() {
+  const getOrderTypeBadge = (orderType: string) => {
+    switch (orderType) {
+      case "FTL":
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">FTL</Badge>;
+      case "LTL":
+        return <Badge className="bg-green-100 text-green-800 border-green-200">LTL</Badge>;
+      case "Mixed":
+        return <Badge className="bg-orange-100 text-orange-800 border-orange-200">Mixed</Badge>;
+      default:
+        return <Badge variant="outline">{orderType}</Badge>;
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -17,6 +30,7 @@ export function ActiveShipmentsTab() {
           <TableHeader>
             <TableRow>
               <TableHead>Shipment ID</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Orders</TableHead>
               <TableHead>Weight</TableHead>
@@ -31,6 +45,9 @@ export function ActiveShipmentsTab() {
             {existingShipments.map((shipment) => (
               <TableRow key={shipment.id}>
                 <TableCell className="font-medium">{shipment.id}</TableCell>
+                <TableCell>
+                  {getOrderTypeBadge(shipment.orderType)}
+                </TableCell>
                 <TableCell>
                   <StatusBadge status={shipment.status} />
                 </TableCell>
