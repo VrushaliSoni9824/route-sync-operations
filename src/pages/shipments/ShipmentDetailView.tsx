@@ -34,6 +34,16 @@ interface Stop {
   notes?: string;
 }
 
+
+interface Stop2 {
+  id: string;
+  type: "pickup" | "delivery" | "terminal" | "customs";
+  location: string;
+  address: string;
+  orderIds: string[];
+  timeWindow: string;
+}
+
 interface Trip {
   id: string;
   driverId?: string;
@@ -46,7 +56,7 @@ interface Trip {
   status: "planned" | "dispatched" | "in-progress" | "completed";
   executionMode: "asset" | "brokered";
   notes?: string;
-  assignedStops: string[];
+  assignedStops: Stop2[];
 }
 
 const sampleShipment = {
@@ -193,7 +203,6 @@ const sampleShipment = {
     total: 2253
   }
 };
-
 const sampleTrips: Trip[] = [
   {
     id: "TRIP-001",
@@ -204,10 +213,36 @@ const sampleTrips: Trip[] = [
     trailerId: "TR-8901",
     stopCount: 3,
     eta: "2024-01-15 18:00",
-    status: "in-progress" as const,
-    executionMode: "asset" as const,
+    status: "in-progress",
+    executionMode: "asset",
     notes: "Driver has experience with this route",
-    assignedStops: ["Stop 1", "Stop 2", "Stop 3"]
+    assignedStops: [
+      {
+        id: "1",
+        type: "pickup" as const,
+        location: "ACME Warehouse",
+        address: "123 Industrial Blvd, Brooklyn, NY 11201",
+        orderIds: ["ORD-001"],
+        timeWindow: "13:00 - 17:00",
+      },
+      {
+        id: "2", 
+        type: "pickup" as const,
+        location: "ACME Distribution",
+        address: "456 Warehouse Ave, Queens, NY 11375",
+        orderIds: ["ORD-002"],
+        timeWindow: "13:00 - 17:00",
+      },
+      {
+        id: "3",
+        type: "delivery" as const,
+        location: "Boston Regional DC",
+        address: "789 Commerce St, Boston, MA 02101",
+        orderIds: ["ORD-001,ORD-002"],
+        timeWindow: "08:00 - 17:00",
+
+      
+    }] // assign actual Stop[] instead of strings
   }
 ];
 

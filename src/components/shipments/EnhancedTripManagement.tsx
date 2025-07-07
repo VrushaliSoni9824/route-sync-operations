@@ -456,17 +456,28 @@ interface CreateTripFormProps {
 }
 
 function CreateTripForm({ onSubmit }: CreateTripFormProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    driverId: string;
+    driverName: string;
+    truckId: string;
+    trailerId: string;
+    stopCount: number;
+    eta: string;
+    status: "planned" | "dispatched" | "in-progress" | "completed";
+    executionMode: "asset" | "brokered";
+    notes: string;
+  }>({
     driverId: "",
     driverName: "",
     truckId: "",
     trailerId: "",
     stopCount: 0,
     eta: "",
-    status: "planned" as const,
-    executionMode: "asset" as const,
+    status: "planned",
+    executionMode: "asset",
     notes: ""
   });
+  
 
   const handleDriverChange = (driverId: string) => {
     const driver = mockDrivers.find(d => d.id === driverId);

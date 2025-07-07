@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Eye, X, Edit, Plus, List, Tabs2, Package, MapPin, User } from "lucide-react";
+import { Eye, X, Edit, Plus, List, Package, MapPin, User } from "lucide-react";
 
 interface Order {
   id: string;
@@ -95,12 +95,17 @@ export function EnhancedOrdersManagement({ orders: initialOrders, onOrdersUpdate
         <h3 className="text-lg font-semibold">Enhanced Orders Management</h3>
         <div className="flex items-center space-x-4">
           {/* View Toggle */}
-          <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "list" | "tabs")}>
+          <ToggleGroup type="single" value={viewMode}  
+          onValueChange={(value) => {
+            setViewMode(value as "list" | "tabs")
+          }}
+          // onValueChange={(value) => value && setViewMode(value as "list" | "tabs")}
+          >
             <ToggleGroupItem value="list" aria-label="List View">
               <List className="h-4 w-4" />
             </ToggleGroupItem>
             <ToggleGroupItem value="tabs" aria-label="Tabbed View">
-              <Tabs2 className="h-4 w-4" />
+              <Tabs className="h-4 w-4" />
             </ToggleGroupItem>
           </ToggleGroup>
 
