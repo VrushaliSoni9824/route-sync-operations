@@ -31,6 +31,7 @@ interface Stop {
 interface EnhancedStopsManagementProps {
   stops: Stop[];
   onStopsUpdate: (stops: Stop[]) => void;
+  executionMode: "asset" | "brokered" | "hybrid";
 }
 
 const getStopTypeIcon = (type: string) => {
@@ -52,7 +53,7 @@ const getStopStatusBadge = (status: string) => {
   return <StatusBadge status={statusMap[status] || "planned"} />;
 };
 
-export function EnhancedStopsManagement({ stops: initialStops, onStopsUpdate }: EnhancedStopsManagementProps) {
+export function EnhancedStopsManagement({ stops: initialStops, onStopsUpdate, executionMode }: EnhancedStopsManagementProps) {
   const [stops, setStops] = useState<Stop[]>(initialStops.map(stop => ({ ...stop, expanded: false })));
   const [editingStop, setEditingStop] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(false);

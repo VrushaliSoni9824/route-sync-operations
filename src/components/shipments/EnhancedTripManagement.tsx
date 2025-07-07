@@ -41,7 +41,8 @@ interface EnhancedTripManagementProps {
   trips: Trip[];
   unassignedStops: Stop[];
   onTripsUpdate: (trips: Trip[]) => void;
-  onStopsUpdate: (stops: Stop[]) => void;
+  onUnassignedStopsUpdate: (stops: Stop[]) => void;
+  executionMode: "asset" | "brokered" | "hybrid";
 }
 
 const mockDrivers = [
@@ -81,7 +82,8 @@ export function EnhancedTripManagement({
   trips: initialTrips, 
   unassignedStops: initialUnassignedStops, 
   onTripsUpdate, 
-  onStopsUpdate 
+  onUnassignedStopsUpdate,
+  executionMode 
 }: EnhancedTripManagementProps) {
   const [trips, setTrips] = useState<Trip[]>(initialTrips);
   const [unassignedStops, setUnassignedStops] = useState<Stop[]>(initialUnassignedStops);
@@ -115,7 +117,7 @@ export function EnhancedTripManagement({
       setUnassignedStops(newUnassignedStops);
       setTrips(newTrips);
       onTripsUpdate(newTrips);
-      onStopsUpdate(newUnassignedStops);
+      onUnassignedStopsUpdate(newUnassignedStops);
     }
 
     // Handle drag between trips
@@ -186,7 +188,7 @@ export function EnhancedTripManagement({
       setTrips(newTrips);
       setUnassignedStops(newUnassignedStops);
       onTripsUpdate(newTrips);
-      onStopsUpdate(newUnassignedStops);
+      onUnassignedStopsUpdate(newUnassignedStops);
     }
   };
 
@@ -212,14 +214,25 @@ export function EnhancedTripManagement({
     setTrips(newTrips);
     setUnassignedStops(newUnassignedStops);
     onTripsUpdate(newTrips);
-    onStopsUpdate(newUnassignedStops);
+    onUnassignedStopsUpdate(newUnassignedStops);
   };
 
   return (
     <div className="space-y-6">
       {/* Header Controls */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Enhanced Trip Management</h3>
+        <div>
+          <h3 className="text-lg font-semibold">Enhanced Trip Management</h3>
+          <p className="text-sm text-muted-foreground">
+            Execution Mode: <Badge variant="outline" className={`ml-1 ${
+              executionMode === 'asset' ? 'bg-blue-100 text-blue-800' :
+              executionMode === 'brokered' ? 'bg-orange-100 text-orange-800' :
+              'bg-purple-100 text-purple-800'
+            }`}>
+              {executionMode.charAt(0).toUpperCase() + executionMode.slice(1)}
+            </Badge>
+          </p>
+        </div>
         <div className="flex items-center space-x-2">
           <Button
             variant={showMap ? "default" : "outline"}
@@ -230,22 +243,24 @@ export function EnhancedTripManagement({
             {showMap ? "Hide Map" : "Show Map"}
           </Button>
           
-          <Drawer>
-            <DrawerTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Trip
-              </Button>
-            </DrawerTrigger>
-            <DrawerContent>
-              <DrawerHeader>
-                <DrawerTitle>Create New Trip</DrawerTitle>
-              </DrawerHeader>
-              <div className="p-6">
-                <CreateTripForm onSubmit={handleCreateTrip} />
-              </div>
-            </DrawerContent>
-          </Drawer>
+          {(executionMode === 'asset' || executionMode === 'hybrid') && (
+            <Drawer>
+              <DrawerTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Trip
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle>Create New Trip</DrawerTitle>
+                </DrawerHeader>
+                <div className="p-6">
+                  <CreateTripForm onSubmit={handleCreateTrip} />
+                </div>
+              </DrawerContent>
+            </Drawer>
+          )}
         </div>
       </div>
 

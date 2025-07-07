@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { EnhancedStopsManagement } from "@/components/shipments/EnhancedStopsManagement";
 import { EnhancedTripManagement } from "@/components/shipments/EnhancedTripManagement";
 import { EnhancedOrdersManagement } from "@/components/shipments/EnhancedOrdersManagement";
+import { TenderingSection } from "@/components/shipments/TenderingSection";
 
 interface Stop {
   id: string;
@@ -62,11 +63,12 @@ interface Trip {
 const sampleShipment = {
   id: "SHP-001",
   orders: [
-    { id: "ORD-001", customer: "ACME Corp", poNumber: "PO123456" },
-    { id: "ORD-002", customer: "ACME Corp", poNumber: "PO123457" }
+    { id: "ORD-001", customer: "ACME Corp", poNumber: "PO123456", executionType: "asset" as "asset" | "brokered", assignedTrip: "TRIP-001" },
+    { id: "ORD-002", customer: "ACME Corp", poNumber: "PO123457", executionType: "brokered" as "asset" | "brokered", assignedTrip: "TRIP-002" }
   ],
   status: "in-transit" as const,
-  executionMode: "Asset",
+  executionMode: "hybrid" as "asset" | "brokered" | "hybrid",
+  tenderStatus: "partially_tendered" as "pending" | "tendered" | "accepted" | "rejected" | "partially_tendered",
   equipment: "Dry Van 53'",
   driver: {
     name: "John Doe",
@@ -363,6 +365,13 @@ export function ShipmentDetailView() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            <Badge variant="outline" className={`font-medium ${
+              sampleShipment.executionMode === 'asset' ? 'bg-blue-100 text-blue-800' :
+              sampleShipment.executionMode === 'brokered' ? 'bg-orange-100 text-orange-800' :
+              'bg-purple-100 text-purple-800'
+            }`}>
+              {sampleShipment.executionMode.charAt(0).toUpperCase() + sampleShipment.executionMode.slice(1)}
+            </Badge>
             <StatusBadge status="in-transit" />
             <Button variant="outline">
               <Edit className="h-4 w-4 mr-2" />
@@ -405,6 +414,9 @@ export function ShipmentDetailView() {
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="stops">Stops Management</TabsTrigger>
             <TabsTrigger value="trips">Trip Management</TabsTrigger>
+            {(sampleShipment.executionMode === 'brokered' || sampleShipment.executionMode === 'hybrid') && (
+              <TabsTrigger value="tendering">Tendering</TabsTrigger>
+            )}
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
             <TabsTrigger value="costs">Costs</TabsTrigger>
           </TabsList>
@@ -634,13 +646,15 @@ export function ShipmentDetailView() {
                 deliveryLocation: "Boston, MA"
               }))}
               onOrdersUpdate={handleOrdersUpdate}
+              executionMode={sampleShipment.executionMode}
             />
           </TabsContent>
 
           <TabsContent value="stops" className="space-y-6">
             <EnhancedStopsManagement 
-              stops={stops} 
-              onStopsUpdate={handleStopsUpdate} 
+              stops={stops}
+              onStopsUpdate={handleStopsUpdate}
+              executionMode={sampleShipment.executionMode}
             />
           </TabsContent>
 
@@ -649,9 +663,20 @@ export function ShipmentDetailView() {
               trips={trips}
               unassignedStops={unassignedStops}
               onTripsUpdate={handleTripsUpdate}
-              onStopsUpdate={handleUnassignedStopsUpdate}
+              onUnassignedStopsUpdate={handleUnassignedStopsUpdate}
+              executionMode={sampleShipment.executionMode}
             />
           </TabsContent>
+
+          {(sampleShipment.executionMode === 'brokered' || sampleShipment.executionMode === 'hybrid') && (
+            <TabsContent value="tendering" className="space-y-6">
+              <TenderingSection 
+                shipmentId={sampleShipment.id}
+                executionMode={sampleShipment.executionMode}
+                tenderStatus={sampleShipment.tenderStatus}
+              />
+            </TabsContent>
+          )}
 
           <TabsContent value="timeline" className="space-y-6">
             <Card>

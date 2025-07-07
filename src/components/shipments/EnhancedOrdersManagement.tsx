@@ -28,6 +28,7 @@ interface Order {
 interface EnhancedOrdersManagementProps {
   orders: Order[];
   onOrdersUpdate: (orders: Order[]) => void;
+  executionMode: "asset" | "brokered" | "hybrid";
 }
 
 const sampleOrders: Order[] = [
@@ -59,7 +60,7 @@ const sampleOrders: Order[] = [
   }
 ];
 
-export function EnhancedOrdersManagement({ orders: initialOrders, onOrdersUpdate }: EnhancedOrdersManagementProps) {
+export function EnhancedOrdersManagement({ orders: initialOrders, onOrdersUpdate, executionMode }: EnhancedOrdersManagementProps) {
   const [orders, setOrders] = useState<Order[]>(initialOrders || sampleOrders);
   const [viewMode, setViewMode] = useState<"list" | "tabs">("list");
   const [searchTerm, setSearchTerm] = useState("");
