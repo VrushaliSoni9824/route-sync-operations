@@ -1,7 +1,8 @@
+
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-type OrderStatus = "created" | "planned" | "tendered" | "in-transit" | "delivered" | "cancelled";
+type OrderStatus = "created" | "planned" | "tendered" | "dispatched" | "in-transit" | "delivered" | "cancelled";
 
 interface StatusBadgeProps {
   status: OrderStatus;
@@ -23,6 +24,11 @@ const statusConfig: Record<OrderStatus, { label: string; variant: string; classN
     label: "Tendered",
     variant: "secondary", 
     className: "bg-status-tendered text-white"
+  },
+  dispatched: {
+    label: "Dispatched",
+    variant: "secondary",
+    className: "bg-status-dispatched text-white"
   },
   "in-transit": {
     label: "In Transit",

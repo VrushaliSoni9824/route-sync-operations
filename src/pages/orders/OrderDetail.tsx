@@ -1,4 +1,3 @@
-
 import { TmsLayout } from "@/components/TmsLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,12 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { TmsMap } from "@/components/maps/TmsMap";
 import { Separator } from "@/components/ui/separator";
-import { FileText, MapPin, Truck, Clock, User, Edit, X, CheckCircle, Trash2 } from "lucide-react";
+import { FileText, MapPin, Truck, Clock, User, Edit, X, CheckCircle, Trash2, Eye, GitBranch } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-
-// import { CommodityFormSection } from "@/components/orders/CommodityFormSection";
+import { VisualFlowModal } from "@/components/orders/VisualFlowModal";
+import { useNavigate } from "react-router-dom";
 
 // Sample order data - in real app this would come from API/router params
 const orderData = {
@@ -23,6 +22,7 @@ const orderData = {
   deliveryDate: "2024-01-18",
   status: "created" as const,
   division: "West",
+  orderType: "FTL" as const,
   origin: {
     address: "1234 Industrial Blvd",
     city: "Los Angeles",
@@ -47,7 +47,17 @@ const orderData = {
   value: "$2,850.00",
   accessorials: ["Liftgate - Origin", "Appointment Required"],
   specialInstructions: "Handle with care - fragile electronics. Call 2 hours before delivery.",
-  internalNotes: "High-value customer - priority handling"
+  internalNotes: "High-value customer - priority handling",
+  linkedShipments: [
+    {
+      id: "SHIP-001",
+      status: "planned" as const,
+      stopNumber: 1,
+      totalStops: 2,
+      equipment: "Dry Van 53'",
+      driver: "John Smith"
+    }
+  ]
 };
 
 const auditTrail = [
@@ -63,6 +73,9 @@ const attachedDocuments = [
 ];
 
 export default function OrderDetail() {
+  const [showFlowModal, setShowFlowModal] = useState(false);
+  const navigate = useNavigate();
+
   const mapLocations = [
     {
       id: 'pickup',
@@ -79,6 +92,7 @@ export default function OrderDetail() {
       status: 'pending' as const
     }
   ];
+
   type TripStatus = "created" | "dispatched" | "in-progress" | "delivered" | "closed";
 
   const sampleTrip = {
@@ -130,9 +144,11 @@ export default function OrderDetail() {
     dispatchedAt: "2024-01-15T07:30:00Z",
     estimatedArrival: "2024-01-15T16:30:00Z"
   };
+
   const getCurrentStepIndex = () => {
     return statusSteps.findIndex(step => step.key === sampleTrip.status);
   };
+
   const statusSteps = [
     { key: "created", label: "Created", icon: FileText },
     { key: "dispatched", label: "Dispatched", icon: Truck },
@@ -220,6 +236,13 @@ export default function OrderDetail() {
           </>
     );
   }
+
+  const getOrderTypeBadge = (orderType: string) => {
+    return orderType === "FTL" ? 
+      <Badge className="bg-blue-100 text-blue-800 border-blue-200">FTL</Badge> :
+      <Badge className="bg-green-100 text-green-800 border-green-200">LTL</Badge>;
+  };
+
   return (
     <TmsLayout 
       title="Order Details"
@@ -237,10 +260,15 @@ export default function OrderDetail() {
               <p className="text-muted-foreground">{orderData.customer}</p>
             </div>
             <StatusBadge status={orderData.status} />
+            {getOrderTypeBadge(orderData.orderType)}
             <Badge variant="outline">{orderData.division}</Badge>
           </div>
           
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowFlowModal(true)}>
+              <GitBranch className="h-4 w-4 mr-2" />
+              View Flow
+            </Button>
             <Button variant="outline" size="sm">
               <Edit className="h-4 w-4 mr-2" />
               Edit Order
@@ -254,6 +282,7 @@ export default function OrderDetail() {
             </Button>
           </div>
         </div>
+
         <Card>
         <CardContent className="p-2">
           <div className="flex items-center justify-between">
@@ -287,18 +316,19 @@ export default function OrderDetail() {
           </div>
         </CardContent>
       </Card>
+
         <Tabs defaultValue="summary" className="space-y-6">
           <TabsList>
             <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="shipments">Linked Shipments</TabsTrigger>
             <TabsTrigger value="quote">Quote</TabsTrigger>
             <TabsTrigger value="stops">Stops & Route</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="audit">Audit Trail</TabsTrigger>
           </TabsList>
 
-          {/* Summary Tab */}
           <TabsContent value="summary">
-          <div className="space-y-4">
+            <div className="space-y-4">
 
             <div className="grid grid-cols-4 gap-4">
               {/* Order Information */}
@@ -494,10 +524,76 @@ export default function OrderDetail() {
             </div>
           </TabsContent>
 
+          <TabsContent value="shipments">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Truck className="h-5 w-5" />
+                  Linked Shipments
+                </CardTitle>
+                <CardDescription>
+                  {orderData.orderType === "FTL" ? 
+                    "This FTL order is assigned to a single shipment." :
+                    "This LTL order may be part of multiple shipments for consolidation."
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {orderData.linkedShipments.length > 0 ? (
+                  <div className="space-y-4">
+                    {orderData.linkedShipments.map((shipment) => (
+                      <Card key={shipment.id} className="border-l-4 border-l-blue-500">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div>
+                                <div className="font-semibold">{shipment.id}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  Stop {shipment.stopNumber} of {shipment.totalStops}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Equipment: {shipment.equipment} • Driver: {shipment.driver}
+                                </div>
+                              </div>
+                              <StatusBadge status={shipment.status} />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => navigate(`/shipments/${shipment.id}`)}
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                View Shipment
+                              </Button>
+                              <Button size="sm" variant="outline">
+                                Remove
+                              </Button>
+                              <Button size="sm" variant="outline">
+                                Reassign
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Truck className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No shipments linked to this order yet.</p>
+                    <Button className="mt-4" onClick={() => navigate('/shipments/planning')}>
+                      Create Shipment
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="quote">
           </TabsContent>
 
-          {/* Stops & Route Tab */}
           <TabsContent value="stops">
   <div className="grid grid-cols-2 gap-6">
     {/* Left: Map (50%) */}
@@ -548,7 +644,6 @@ export default function OrderDetail() {
   </div>
 </TabsContent>
 
-          {/* Documents Tab */}
           <TabsContent value="documents">
             <Card>
               <CardHeader>
@@ -580,7 +675,6 @@ export default function OrderDetail() {
             </Card>
           </TabsContent>
 
-          {/* Audit Trail Tab */}
           <TabsContent value="audit">
             <Card>
               <CardHeader>
@@ -610,6 +704,13 @@ export default function OrderDetail() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <VisualFlowModal 
+          isOpen={showFlowModal}
+          onClose={() => setShowFlowModal(false)}
+          orderId={orderData.id}
+          orderType={orderData.orderType}
+        />
       </div>
     </TmsLayout>
   );

@@ -230,7 +230,7 @@ export default function ShipmentList() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {/* <StatusBadge status={shipment.status} /> */}
+                      <StatusBadge status={shipment.status} />
                     </TableCell>
                     <TableCell>{shipment.carrier}</TableCell>
                     <TableCell className="text-sm">

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,13 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Plus, MoreHorizontal, Download, Upload } from "lucide-react";
+import { Search, Filter, Plus, MoreHorizontal, Download, Upload, Eye } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Link, useNavigate } from "react-router-dom";
 
 const orders = [
@@ -29,7 +36,8 @@ const orders = [
     destination: "Phoenix, AZ",
     weight: "15,000 lbs",
     value: "$2,850.00",
-    trip: "N/A"
+    orderType: "FTL" as const,
+    shipments: [{ id: "SHIP-001", status: "planned" }]
   },
   {
     id: "ORD-002", 
@@ -43,7 +51,11 @@ const orders = [
     destination: "Miami, FL", 
     weight: "22,500 lbs",
     value: "$3,200.00",
-     trip: "N/A"
+    orderType: "LTL" as const,
+    shipments: [
+      { id: "SHIP-201", status: "planned" },
+      { id: "SHIP-202", status: "tendered" }
+    ]
   },
   {
     id: "ORD-003",
@@ -57,7 +69,8 @@ const orders = [
     destination: "Denver, CO",
     weight: "18,750 lbs", 
     value: "$4,100.00",
-    trip: "N/A"
+    orderType: "FTL" as const,
+    shipments: []
   },
   {
     id: "ORD-004",
@@ -71,7 +84,8 @@ const orders = [
     destination: "Portland, OR",
     weight: "12,000 lbs",
     value: "$1,950.00",
-    trip: "N/A"
+    orderType: "LTL" as const,
+    shipments: [{ id: "SHIP-301", status: "dispatched" }]
   },
   {
     id: "ORD-005",
@@ -85,19 +99,18 @@ const orders = [
     destination: "Dallas, TX",
     weight: "8,500 lbs",
     value: "$1,200.00",
-    trip: "N/A"
+    orderType: "FTL" as const,
+    shipments: [{ id: "SHIP-401", status: "delivered" }]
   }
 ];
-
 
 export function OrderList() {
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [divisionFilter, setDivisionFilter] = useState<string>("all");
-  const [drawerOrder, setDrawerOrder] = useState<typeof orders[0] | null>(null);
+  const [orderTypeFilter, setOrderTypeFilter] = useState<string>("all");
+  const [previewOrder, setPreviewOrder] = useState<typeof orders[0] | null>(null);
   const navigate = useNavigate();
-  let clickTimeout: NodeJS.Timeout;
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -115,19 +128,25 @@ export function OrderList() {
     }
   };
 
+  const getOrderTypeBadge = (orderType: string) => {
+    return orderType === "FTL" ? 
+      <Badge className="bg-blue-100 text-blue-800 border-blue-200">FTL</Badge> :
+      <Badge className="bg-green-100 text-green-800 border-green-200">LTL</Badge>;
+  };
+
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.poNumber.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
-    const matchesDivision = divisionFilter === "all" || order.division === divisionFilter;
+    const matchesOrderType = orderTypeFilter === "all" || order.orderType === orderTypeFilter;
 
-    return matchesSearch && matchesStatus && matchesDivision;
+    return matchesSearch && matchesStatus && matchesOrderType;
   });
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header and filters... */}
+      {/* Header and filters */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
@@ -156,6 +175,16 @@ export function OrderList() {
             </SelectContent>
           </Select>
 
+          <Select value={orderTypeFilter} onValueChange={setOrderTypeFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Order Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="FTL">FTL</SelectItem>
+              <SelectItem value="LTL">LTL</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center gap-2">
@@ -198,7 +227,7 @@ export function OrderList() {
         <CardContent>
           <Table>
             <TableHeader>
-            <TableRow>
+              <TableRow>
                 <TableHead className="w-12">
                   <Checkbox
                     checked={selectedOrders.length === orders.length}
@@ -206,12 +235,12 @@ export function OrderList() {
                   />
                 </TableHead>
                 <TableHead>Order ID</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Customer</TableHead>
-                <TableHead>PO Number</TableHead>
                 <TableHead>Route</TableHead>
                 <TableHead>Weight</TableHead>
                 <TableHead>Value</TableHead>
-                <TableHead>Trip</TableHead>
+                <TableHead>Shipments</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
@@ -221,24 +250,20 @@ export function OrderList() {
                 <TableRow
                   key={order.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => {
-                    clearTimeout(clickTimeout);
-                    clickTimeout = setTimeout(() => setDrawerOrder(order), 200);
-                  }}
-                  onDoubleClick={() => {
-                    clearTimeout(clickTimeout);
-                    navigate(`/orders/${order.id}`);
-                  }}
+                  onClick={() => setPreviewOrder(order)}
+                  onDoubleClick={() => navigate(`/orders/${order.id}`)}
                 >
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={selectedOrders.includes(order.id)}
                       onCheckedChange={(checked) => handleSelectOrder(order.id, checked as boolean)}
                     />
                   </TableCell>
                   <TableCell className="font-medium text-primary">{order.id}</TableCell>
+                  <TableCell>
+                    {getOrderTypeBadge(order.orderType)}
+                  </TableCell>
                   <TableCell>{order.customer}</TableCell>
-                  <TableCell>{order.poNumber}</TableCell>
                   <TableCell>
                     <div className="text-sm">
                       <div>{order.origin}</div>
@@ -247,12 +272,32 @@ export function OrderList() {
                   </TableCell>
                   <TableCell>{order.weight}</TableCell>
                   <TableCell className="font-medium">{order.value}</TableCell>
-                  <TableCell className="font-medium">{order.trip}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {order.shipments.length > 0 ? (
+                        order.shipments.map((shipment) => (
+                          <Button
+                            key={shipment.id}
+                            variant="outline"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/shipments/${shipment.id}`);
+                            }}
+                          >
+                            {shipment.id}
+                          </Button>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Unassigned</span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <StatusBadge status={order.status} />
                   </TableCell>
-                 
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
@@ -260,7 +305,9 @@ export function OrderList() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem><Link to="/orders/SHP-001">View Details</Link></DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/orders/${order.id}`)}>
+                          View Details
+                        </DropdownMenuItem>
                         <DropdownMenuItem>Edit Order</DropdownMenuItem>
                         <DropdownMenuItem>Duplicate</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">Cancel Order</DropdownMenuItem>
@@ -274,31 +321,69 @@ export function OrderList() {
         </CardContent>
       </Card>
 
-      {/* Drawer Backdrop */}
-      {drawerOrder && (
-        <div className="fixed inset-0 bg-black/20 z-40" onClick={() => setDrawerOrder(null)}></div>
-      )}
-
-      {/* Slide-Out Drawer */}
-      {drawerOrder && (
-        <div className="fixed top-0 right-0 w-[400px] h-full bg-white shadow-xl z-50 border-l overflow-y-auto">
-          <div className="flex items-center justify-between p-4 border-b">
-            <h2 className="text-lg font-semibold">Order Details</h2>
-            <Button variant="ghost" onClick={() => setDrawerOrder(null)}>Close</Button>
-          </div>
-          <div className="p-4 space-y-2 text-sm">
-            <div><strong>Order ID:</strong> {drawerOrder.id}</div>
-            <div><strong>Customer:</strong> {drawerOrder.customer}</div>
-            <div><strong>PO Number:</strong> {drawerOrder.poNumber}</div>
-            <div><strong>Status:</strong> {drawerOrder.status}</div>
-            <div><strong>Pickup:</strong> {drawerOrder.pickupDate} – {drawerOrder.origin}</div>
-            <div><strong>Delivery:</strong> {drawerOrder.deliveryDate} – {drawerOrder.destination}</div>
-            <div><strong>Weight:</strong> {drawerOrder.weight}</div>
-            <div><strong>Value:</strong> {drawerOrder.value}</div>
-            <div><strong>Trip:</strong> {drawerOrder.trip}</div>
-          </div>
-        </div>
-      )}
+      {/* Order Preview Dialog */}
+      <Dialog open={!!previewOrder} onOpenChange={() => setPreviewOrder(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Order Preview: {previewOrder?.id}
+              {previewOrder && getOrderTypeBadge(previewOrder.orderType)}
+            </DialogTitle>
+          </DialogHeader>
+          {previewOrder && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div><strong>Customer:</strong> {previewOrder.customer}</div>
+                <div><strong>PO Number:</strong> {previewOrder.poNumber}</div>
+                <div><strong>Status:</strong> <StatusBadge status={previewOrder.status} /></div>
+                <div><strong>Weight:</strong> {previewOrder.weight}</div>
+                <div><strong>Value:</strong> {previewOrder.value}</div>
+                <div><strong>Division:</strong> {previewOrder.division}</div>
+              </div>
+              <div>
+                <strong>Route:</strong>
+                <div className="text-sm text-muted-foreground mt-1">
+                  {previewOrder.origin} → {previewOrder.destination}
+                </div>
+              </div>
+              <div>
+                <strong>Linked Shipments:</strong>
+                <div className="flex gap-2 mt-2">
+                  {previewOrder.shipments.length > 0 ? (
+                    previewOrder.shipments.map((shipment) => (
+                      <Button
+                        key={shipment.id}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setPreviewOrder(null);
+                          navigate(`/shipments/${shipment.id}`);
+                        }}
+                      >
+                        <Eye className="h-3 w-3 mr-1" />
+                        {shipment.id}
+                      </Button>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground text-sm">No shipments assigned</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button onClick={() => {
+                  setPreviewOrder(null);
+                  navigate(`/orders/${previewOrder.id}`);
+                }}>
+                  View Full Details
+                </Button>
+                <Button variant="outline" onClick={() => setPreviewOrder(null)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
