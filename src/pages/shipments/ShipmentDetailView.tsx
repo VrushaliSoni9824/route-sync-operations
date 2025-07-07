@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, Truck, MapPin, Package, Clock, Route, DollarSign } from "lucide-react";
+import { ArrowLeft, Edit, Truck, MapPin, Package, Clock, Route, DollarSign, Eye, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,8 @@ import { ExceptionBanner } from "@/components/ui/exception-banner";
 import { Timeline } from "@/components/ui/timeline";
 import { StopsManagementPanel } from "@/components/shipments/StopsManagementPanel";
 import { TripManagementTab } from "@/components/shipments/TripManagementTab";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 
 interface Stop {
   id: string;
@@ -555,7 +557,63 @@ export function ShipmentDetailView() {
         </TabsContent>
 
         <TabsContent value="orders" className="space-y-6">
-        </TabsContent>
+  <Card>
+    <CardHeader>
+      <CardTitle>Orders in Shipment</CardTitle>
+      <CardDescription>Manage linked orders. Filter, sort, expand, and take actions.</CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      <div className="flex justify-between items-center">
+        <Input placeholder="Search by Order ID, Customer, PO#..." className="w-1/2" />
+        <div className="space-x-2">
+          <Button variant="outline">Bulk Unlink</Button>
+          <Button variant="default">+ Add Order</Button>
+        </div>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Order ID</TableHead>
+            <TableHead>Customer</TableHead>
+            <TableHead>PO#</TableHead>
+            <TableHead>Stops</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sampleShipment.orders.map((order) => (
+            <TableRow key={order.id}>
+              <TableCell className="font-medium">{order.id}</TableCell>
+              <TableCell>{order.customer}</TableCell>
+              <TableCell>{order.poNumber}</TableCell>
+              <TableCell>2</TableCell> {/* Placeholder */}
+              <TableCell>
+                <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
+                  Awaiting POD
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className="bg-indigo-100 text-indigo-800">
+                  FTL
+                </Badge>
+              </TableCell>
+              <TableCell className="flex space-x-2">
+                <Button variant="ghost" size="sm">
+                  <Eye className="h-4 w-4 mr-1" /> View
+                </Button>
+                <Button variant="ghost" size="sm">
+                  <X className="h-4 w-4 mr-1" /> Unlink
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </CardContent>
+  </Card>
+</TabsContent>
 
         <TabsContent value="stops" className="space-y-6">
           <StopsManagementPanel stops={stops} onStopsUpdate={handleStopsUpdate} />
