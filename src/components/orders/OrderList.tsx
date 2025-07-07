@@ -63,13 +63,13 @@ const orders = [
     poNumber: "PO-2024-003", 
     pickupDate: "2024-01-14",
     deliveryDate: "2024-01-17",
-    status: "tendered" as const,
+    status: "in-transit" as const,
     division: "Central",
     origin: "Chicago, IL",
     destination: "Denver, CO",
     weight: "18,750 lbs", 
     value: "$4,100.00",
-    orderType: "FTL" as const,
+    orderType: "LTL" as const,
     shipments: []
   },
   {
@@ -78,7 +78,7 @@ const orders = [
     poNumber: "PO-2024-004",
     pickupDate: "2024-01-13",
     deliveryDate: "2024-01-16", 
-    status: "in-transit" as const,
+    status: "tendered" as const,
     division: "West",
     origin: "Seattle, WA",
     destination: "Portland, OR",
@@ -110,6 +110,8 @@ export function OrderList() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [orderTypeFilter, setOrderTypeFilter] = useState<string>("all");
   const [previewOrder, setPreviewOrder] = useState<typeof orders[0] | null>(null);
+  const [openCreateDialog, setOpenCreateDialog] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSelectAll = (checked: boolean) => {
@@ -204,17 +206,24 @@ export function OrderList() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          
+          <Link to="/orders/bulk-upload">
           <Button variant="outline" size="sm">
             <Upload className="h-4 w-4 mr-2" />
             Import
           </Button>
+          </Link>
           
-          <Button asChild>
+          
+          {/* <Button asChild>
             <Link to="/orders/create">
               <Plus className="h-4 w-4 mr-2" />
               New Order
             </Link>
+          </Button> */}
+
+          <Button onClick={() => setOpenCreateDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Order
           </Button>
         </div>
       </div>
@@ -308,6 +317,7 @@ export function OrderList() {
                         <DropdownMenuItem onClick={() => navigate(`/orders/${order.id}`)}>
                           View Details
                         </DropdownMenuItem>
+                        <DropdownMenuItem>Use this Template</DropdownMenuItem>
                         <DropdownMenuItem>Edit Order</DropdownMenuItem>
                         <DropdownMenuItem>Duplicate</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">Cancel Order</DropdownMenuItem>
@@ -320,6 +330,37 @@ export function OrderList() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Dialog Content */}
+<Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
+  <DialogContent className="max-w-md">
+    <DialogHeader>
+      <DialogTitle>Create New Order</DialogTitle>
+    </DialogHeader>
+    <p className="text-sm text-muted-foreground mb-4">
+      Would you like to start from scratch or use an existing order as a template?
+    </p>
+    <div className="flex justify-end gap-2">
+      <Button
+        variant="outline"
+        onClick={() => {
+          setOpenCreateDialog(false);
+          navigate("/orders/OrderTemplatePicker"); // You can modify this route logic
+        }}
+      >
+        Use Template
+      </Button>
+      <Button
+        onClick={() => {
+          setOpenCreateDialog(false);
+          navigate("/orders/create");
+        }}
+      >
+        Create from Scratch
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
 
       {/* Order Preview Dialog */}
       <Dialog open={!!previewOrder} onOpenChange={() => setPreviewOrder(null)}>

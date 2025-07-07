@@ -15,7 +15,8 @@ import DragDropPlanning from "./pages/shipments/DragDropPlanning";
 import CarrierTendering from "./pages/shipments/CarrierTendering";
 import DispatchBoard from "./pages/shipments/DispatchBoard";
 import NotFound from "./pages/NotFound";
-
+import { EDILogsView } from "./pages/orders/EDILogsView";
+import { OrderTemplatePicker } from "./components/orders/ListTemplates";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -29,6 +30,8 @@ const App = () => (
           <Route path="/orders/create" element={<CreateOrder />} />
           <Route path="/orders/:id" element={<OrderDetail />} />
           <Route path="/orders/bulk-upload" element={<BulkUpload />} />
+          <Route path="/orders/edi-logs" element={<EDILogsView />} />
+          <Route path="/orders/OrderTemplatePicker" element={<OrderTemplatePicker />} />
           <Route path="/shipments" element={<ShipmentList />} />
           <Route path="/shipments/:id" element={<ShipmentDetailView />} />
           <Route path="/shipments/planning" element={<ShipmentPlanning />} />

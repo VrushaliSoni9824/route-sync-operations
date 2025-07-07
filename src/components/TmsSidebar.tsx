@@ -22,9 +22,6 @@ const menuItems = [
     icon: Package,
     subItems: [
       { title: "Order List", url: "/" },
-      { title: "Create Order", url: "/orders/create" },
-      { title: "Bulk Upload", url: "/orders/bulk-upload" },
-      { title: "Templates", url: "/orders/templates" },
       { title: "EDI Logs", url: "/orders/edi-logs" },
     ]
   },

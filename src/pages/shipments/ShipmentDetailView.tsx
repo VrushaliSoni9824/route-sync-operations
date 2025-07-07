@@ -279,39 +279,8 @@ export function ShipmentDetailView() {
   };
 
   return (
-     <TmsLayout 
-          title="Shipment Management"
-          breadcrumbs={[
-            { label: "Shipments" }
-          ]}
-        >
-    <div className="space-y-6">
-      {/* Exception Banner */}
-      {showExceptionBanner && (
-        <ExceptionBanner
-          type="attention-required"
-          title="Delivery Window At Risk"
-          summary="Current ETA (6:00 PM) exceeds customer delivery window (5:00 PM) by 1 hour"
-          details={{
-            reason: "Traffic delays due to construction on I-95",
-            location: "Boston, MA approach",
-            timestamp: "Jan 15, 4:30 PM",
-            impact: "Potential customer service escalation and delivery fee",
-            suggestedAction: "Contact customer to negotiate extended delivery window or expedite route"
-          }}
-          onDismiss={() => setShowExceptionBanner(false)}
-        />
-      )}
-
-      {/* Status Stepper */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Shipment Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <StatusStepper steps={statusSteps} />
-        </CardContent>
-      </Card>
+     <TmsLayout>
+    <div className="p-6 space-y-6">
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -340,9 +309,34 @@ export function ShipmentDetailView() {
         </div>
       </div>
 
+ {/* Exception Banner */}
+ {showExceptionBanner && (
+        <ExceptionBanner
+          type="attention-required"
+          title="Delivery Window At Risk"
+          summary="Current ETA (6:00 PM) exceeds customer delivery window (5:00 PM) by 1 hour"
+          details={{
+            reason: "Traffic delays due to construction on I-95",
+            location: "Boston, MA approach",
+            timestamp: "Jan 15, 4:30 PM",
+            impact: "Potential customer service escalation and delivery fee",
+            suggestedAction: "Contact customer to negotiate extended delivery window or expedite route"
+          }}
+          onDismiss={() => setShowExceptionBanner(false)}
+        />
+      )}
+
+      {/* Status Stepper */}
+      <Card className="pt-3">
+        <CardContent>
+          <StatusStepper steps={statusSteps} />
+        </CardContent>
+      </Card>
+      
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="orders">Orders</TabsTrigger>
           <TabsTrigger value="stops">Stops Management</TabsTrigger>
           <TabsTrigger value="trips">Trip Management</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
@@ -558,6 +552,9 @@ export function ShipmentDetailView() {
               </Card>
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="orders" className="space-y-6">
         </TabsContent>
 
         <TabsContent value="stops" className="space-y-6">
