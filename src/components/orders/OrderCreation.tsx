@@ -115,7 +115,7 @@ export function OrderCreation() {
  
   return (
     <div className="p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold">Create New Order</h1>
           <p className="text-muted-foreground">Enter order details and shipment information</p>

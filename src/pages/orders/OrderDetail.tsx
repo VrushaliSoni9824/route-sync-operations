@@ -320,10 +320,11 @@ export default function OrderDetail() {
         <Tabs defaultValue="summary" className="space-y-6">
           <TabsList>
             <TabsTrigger value="summary">Summary</TabsTrigger>
-            <TabsTrigger value="shipments">Linked Shipments</TabsTrigger>
             <TabsTrigger value="quote">Quote</TabsTrigger>
+            <TabsTrigger value="shipments">Linked Shipments</TabsTrigger>
             <TabsTrigger value="stops">Stops & Route</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="invoice">Invoice</TabsTrigger>
             <TabsTrigger value="audit">Audit Trail</TabsTrigger>
           </TabsList>
 

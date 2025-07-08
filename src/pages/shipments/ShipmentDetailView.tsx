@@ -412,8 +412,9 @@ export function ShipmentDetailView() {
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="stops">Stops Management</TabsTrigger>
-            <TabsTrigger value="trips">Trip Management</TabsTrigger>
+            <TabsTrigger value="stops">Stops</TabsTrigger>
+            <TabsTrigger value="legs">Legs</TabsTrigger>
+            <TabsTrigger value="trips">Trips</TabsTrigger>
             {(sampleShipment.executionMode === 'brokered' || sampleShipment.executionMode === 'hybrid') && (
               <TabsTrigger value="tendering">Tendering</TabsTrigger>
             )}
@@ -636,7 +637,7 @@ export function ShipmentDetailView() {
             <EnhancedOrdersManagement 
               orders={sampleShipment.orders.map(order => ({
                 ...order,
-                orderType: "FTL" as const,
+                orderType: "LTL" as const,
                 status: "Awaiting POD",
                 linkedStops: ["Stop 1", "Stop 3"],
                 weight: "2,500 lbs",
@@ -657,7 +658,8 @@ export function ShipmentDetailView() {
               executionMode={sampleShipment.executionMode}
             />
           </TabsContent>
-
+          <TabsContent value="legs" className="space-y-6">
+            </TabsContent>
           <TabsContent value="trips" className="space-y-6">
             <EnhancedTripManagement 
               trips={trips}

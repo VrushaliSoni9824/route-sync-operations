@@ -331,6 +331,20 @@ export function OrderList() {
         </CardContent>
       </Card>
 
+      {selectedOrders.length > 1 && (
+  <div className="flex justify-end items-center mt-4">
+    <Button
+      onClick={() => {
+        // You can route to shipment creation flow or handle selection logic here
+        navigate("/shipments/create?orders=" + selectedOrders.join(","));
+      }}
+    >
+      Create Shipment
+    </Button>
+  </div>
+)}
+
+
       {/* Dialog Content */}
 <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
   <DialogContent className="max-w-md">

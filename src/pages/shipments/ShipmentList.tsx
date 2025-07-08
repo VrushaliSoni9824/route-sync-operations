@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Plus, Search, Filter, Ship, MapPin, Clock, Package } from "lucide-react";
 import { Link } from "react-router-dom";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"; // shadcn
 
 // Sample shipment data
 const shipments = [
@@ -206,14 +207,30 @@ export default function ShipmentList() {
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {shipment.orders.map((orderId) => (
-                          <Badge key={orderId} variant="outline" className="text-xs">
-                            {orderId}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
+  <div className="flex flex-wrap gap-1">
+    {shipment.orders.slice(0, 2).map((orderId) => (
+      <Badge key={orderId} variant="outline" className="text-xs">
+        {orderId}
+      </Badge>
+    ))}
+
+    {shipment.orders.length > 2 && (
+      <HoverCard>
+        <HoverCardTrigger asChild>
+          <Badge variant="secondary" className="cursor-pointer text-xs">
+            +{shipment.orders.length - 2} more
+          </Badge>
+        </HoverCardTrigger>
+        <HoverCardContent className="space-y-1 p-3 w-auto text-xs">
+          {shipment.orders.map((orderId) => (
+            <div key={orderId}>{orderId}</div>
+          ))}
+        </HoverCardContent>
+      </HoverCard>
+    )}
+  </div>
+</TableCell>
+
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm">
                         <MapPin className="h-3 w-3" />

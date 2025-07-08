@@ -32,9 +32,9 @@ const menuItems = [
     subItems: [
       { title: "Shipment List", url: "/shipments" },
       { title: "Planning", url: "/shipments/planning" },
-      { title: "Carrier Assignment", url: "/shipments/tendering" },
+      // { title: "Carrier Assignment", url: "/shipments/tendering" },
       { title: "Dispatch Board", url: "/shipments/dispatch" },
-      { title: "Tracking", url: "/shipments/tracking" },
+      // { title: "Tracking", url: "/shipments/tracking" },
     ]
   },
 ];

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Truck, User, Plus, Map, Clock, Package, Edit, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Stop {
   id: string;
@@ -29,6 +30,8 @@ interface Trip {
   driverPhoto?: string;
   truckId?: string;
   trailerId?: string;
+  carrierId?: string;      
+  carrierName?: string;    
   stopCount: number;
   eta: string;
   status: "planned" | "dispatched" | "in-progress" | "completed";
@@ -88,7 +91,9 @@ export function EnhancedTripManagement({
   const [trips, setTrips] = useState<Trip[]>(initialTrips);
   const [unassignedStops, setUnassignedStops] = useState<Stop[]>(initialUnassignedStops);
   const [showMap, setShowMap] = useState(false);
-
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const { toast } = useToast();
+  
   const handleDragEnd = (result: any) => {
     const { source, destination } = result;
     if (!destination) return;
@@ -476,6 +481,8 @@ function CreateTripForm({ onSubmit }: CreateTripFormProps) {
     driverName: string;
     truckId: string;
     trailerId: string;
+    carrierId: string;
+    carrierName: string;
     stopCount: number;
     eta: string;
     status: "planned" | "dispatched" | "in-progress" | "completed";
@@ -486,6 +493,8 @@ function CreateTripForm({ onSubmit }: CreateTripFormProps) {
     driverName: "",
     truckId: "",
     trailerId: "",
+    carrierId: "",
+    carrierName: "",
     stopCount: 0,
     eta: "",
     status: "planned",
@@ -508,16 +517,84 @@ function CreateTripForm({ onSubmit }: CreateTripFormProps) {
     onSubmit(formData);
   };
 
+  const mockCarriers = [
+    { id: "C001", name: "XYZ Logistics" },
+    { id: "C002", name: "BlueSky Freight" },
+    { id: "C003", name: "FastHaul Express" }
+  ];
+  
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+  {/* Execution Mode (First) */}
+  <div>
+    <Label>Execution Mode</Label>
+    <Select
+      value={formData.executionMode}
+      onValueChange={(value: "asset" | "brokered") =>
+        setFormData({ ...formData, executionMode: value })
+      }
+    >
+      <SelectTrigger>
+        <SelectValue placeholder="Select execution mode" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="asset">Asset</SelectItem>
+        <SelectItem value="brokered">Brokered</SelectItem>
+      </SelectContent>
+    </Select>
+  </div>
+
+  {/* Carrier Selection (only for brokered) */}
+  {formData.executionMode === "brokered" && (
+    <div>
+      <Label>Carrier</Label>
+      <Select
+        value={formData.carrierId}
+        onValueChange={(value) => {
+          const selectedCarrier = mockCarriers.find((c) => c.id === value);
+          setFormData({
+            ...formData,
+            carrierId: value,
+            carrierName: selectedCarrier?.name || "",
+          });
+        }}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select carrier" />
+        </SelectTrigger>
+        <SelectContent>
+          {mockCarriers.map((carrier) => (
+            <SelectItem key={carrier.id} value={carrier.id}>
+              {carrier.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )}
+
+  {/* Driver/Truck Selection (only for asset) */}
+  {formData.executionMode === "asset" && (
+    <>
       <div>
         <Label>Assign Driver</Label>
-        <Select value={formData.driverId} onValueChange={handleDriverChange}>
+        <Select
+          value={formData.driverId}
+          onValueChange={(driverId) => {
+            const driver = mockDrivers.find((d) => d.id === driverId);
+            setFormData({
+              ...formData,
+              driverId,
+              driverName: driver?.name || "",
+            });
+          }}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select driver" />
           </SelectTrigger>
           <SelectContent>
-            {mockDrivers.map(driver => (
+            {mockDrivers.map((driver) => (
               <SelectItem key={driver.id} value={driver.id}>
                 {driver.name}
               </SelectItem>
@@ -529,71 +606,76 @@ function CreateTripForm({ onSubmit }: CreateTripFormProps) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Truck</Label>
-          <Select value={formData.truckId} onValueChange={(value) => setFormData({...formData, truckId: value})}>
+          <Select
+            value={formData.truckId}
+            onValueChange={(value) =>
+              setFormData({ ...formData, truckId: value })
+            }
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select truck" />
             </SelectTrigger>
             <SelectContent>
-              {mockEquipment.filter(e => e.type === 'truck').map(truck => (
-                <SelectItem key={truck.id} value={truck.number}>
-                  {truck.number} ({truck.capacity})
-                </SelectItem>
-              ))}
+              {mockEquipment
+                .filter((e) => e.type === "truck")
+                .map((truck) => (
+                  <SelectItem key={truck.id} value={truck.number}>
+                    {truck.number} ({truck.capacity})
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
 
         <div>
           <Label>Trailer</Label>
-          <Select value={formData.trailerId} onValueChange={(value) => setFormData({...formData, trailerId: value})}>
+          <Select
+            value={formData.trailerId}
+            onValueChange={(value) =>
+              setFormData({ ...formData, trailerId: value })
+            }
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select trailer" />
             </SelectTrigger>
             <SelectContent>
-              {mockEquipment.filter(e => e.type === 'trailer').map(trailer => (
-                <SelectItem key={trailer.id} value={trailer.number}>
-                  {trailer.number} ({trailer.type_detail})
-                </SelectItem>
-              ))}
+              {mockEquipment
+                .filter((e) => e.type === "trailer")
+                .map((trailer) => (
+                  <SelectItem key={trailer.id} value={trailer.number}>
+                    {trailer.number} ({trailer.type_detail})
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
       </div>
+    </>
+  )}
 
-      <div>
-        <Label>Execution Mode</Label>
-        <Select value={formData.executionMode} onValueChange={(value: "asset" | "brokered") => setFormData({...formData, executionMode: value})}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="asset">Asset</SelectItem>
-            <SelectItem value="brokered">Brokered</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+  {/* Common fields */}
+  <div>
+    <Label>ETA</Label>
+    <Input
+      value={formData.eta}
+      onChange={(e) => setFormData({ ...formData, eta: e.target.value })}
+      placeholder="2024-01-16 14:30"
+    />
+  </div>
 
-      <div>
-        <Label>ETA</Label>
-        <Input
-          value={formData.eta}
-          onChange={(e) => setFormData({...formData, eta: e.target.value})}
-          placeholder="2024-01-16 14:30"
-        />
-      </div>
+  <div>
+    <Label>Notes</Label>
+    <Textarea
+      value={formData.notes}
+      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+      placeholder="Trip notes..."
+    />
+  </div>
 
-      <div>
-        <Label>Notes</Label>
-        <Textarea
-          value={formData.notes}
-          onChange={(e) => setFormData({...formData, notes: e.target.value})}
-          placeholder="Trip notes..."
-        />
-      </div>
+  <div className="flex justify-end space-x-2">
+    <Button type="submit">Create Trip</Button>
+  </div>
+</form>
 
-      <div className="flex justify-end space-x-2">
-        <Button type="submit">Create Trip</Button>
-      </div>
-    </form>
   );
 }

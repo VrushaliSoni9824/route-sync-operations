@@ -28,7 +28,7 @@ const statusConfig: Record<OrderStatus, { label: string; variant: string; classN
   dispatched: {
     label: "Dispatched",
     variant: "secondary",
-    className: "bg-status-dispatched text-white"
+    className: "bg-status-dispatched text-green"
   },
   "in-transit": {
     label: "In Transit",

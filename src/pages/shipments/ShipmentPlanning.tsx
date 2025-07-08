@@ -41,9 +41,10 @@ export default function ShipmentPlanning() {
         <Tabs defaultValue="orders" className="space-y-6">
           <TabsList>
             <TabsTrigger value="orders">Order Selection</TabsTrigger>
+            <TabsTrigger value="Carrier">Carrier Assignment</TabsTrigger>
             <TabsTrigger value="shipments">Active Shipments</TabsTrigger>
             <TabsTrigger value="route">Route Planning</TabsTrigger>
-            <TabsTrigger value="Carrier">Carrier Assignment</TabsTrigger>
+            
           </TabsList>
 
           {/* Order Selection Tab */}

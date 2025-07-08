@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { TmsLayout } from "@/components/TmsLayout";
@@ -68,6 +68,30 @@ const suggestedOrders = [
     compatible: false,
     division: "West Coast",
     incompatibleReason: "Equipment mismatch: Reefer required, Dry Van configured"
+  },{
+    id: "ORD-007",
+    customer: "Manufacturing Inc",
+    poNumber: "PO-2024-006", 
+    origin: "San Diego, CA 92101",
+    destination: "Las Vegas, NV 89101",
+    pallets: 12,
+    equipment: "Reefer",
+    pickupWindow: "Jan 16, 10:00-15:00",
+    compatible: false,
+    division: "West Coast",
+    incompatibleReason: "Equipment mismatch: Reefer required, Dry Van configured"
+  },
+  {
+    id: "ORD-009",
+    customer: "TechCorp Solutions",
+    poNumber: "PO-2024-004",
+    origin: "Los Angeles 2, CA 90021",
+    destination: "Phoenix 2, AZ 85001",
+    pallets: 15,
+    equipment: "Dry Van",
+    pickupWindow: "Jan 15, 8:00-17:00",
+    compatible: true,
+    division: "West Coast"
   }
 ];
 
@@ -76,11 +100,61 @@ export default function DragDropPlanning() {
   const [assignedOrders, setAssignedOrders] = useState<typeof suggestedOrders>([]);
   const [availableOrders, setAvailableOrders] = useState(suggestedOrders);
 
+  const generateStopsFromOrders = (orders: typeof suggestedOrders) => {
+    const stops: {
+      id: string;
+      type: "pickup" | "delivery";
+      location: string;
+      address: string;
+    }[] = [];
+  
+    const seen = new Set();
+  
+    for (const order of orders) {
+      const pickupKey = `pickup-${order.origin}`;
+      const deliveryKey = `delivery-${order.destination}`;
+  
+      if (!seen.has(pickupKey)) {
+        seen.add(pickupKey);
+        stops.push({
+          id: `pickup-${order.id}`,
+          type: "pickup",
+          location: `${order.origin.split(",")[0]} Pickup`,
+          address: order.origin
+        });
+      }
+  
+      if (!seen.has(deliveryKey)) {
+        seen.add(deliveryKey);
+        stops.push({
+          id: `delivery-${order.id}`,
+          type: "delivery",
+          location: `${order.destination.split(",")[0]} Delivery`,
+          address: order.destination
+        });
+      }
+    }
+  
+    return stops;
+  };
+
+  
   const handleDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
     if (!destination) return;
 
+     // Reorder stops
+  if (
+    source.droppableId === "configured-stops" &&
+    destination.droppableId === "configured-stops"
+  ) {
+    const updatedStops = Array.from(configuredStops);
+    const [moved] = updatedStops.splice(source.index, 1);
+    updatedStops.splice(destination.index, 0, moved);
+    setConfiguredStops(updatedStops);
+    return;
+  }
     // Find the dragged order
     const draggedOrder = availableOrders.find(order => order.id === draggableId);
     if (!draggedOrder) return;
@@ -122,7 +196,12 @@ export default function DragDropPlanning() {
     toast.success(`Shipment configuration saved with ${assignedOrders.length} order(s)`);
     // Handle save logic here
   };
-
+  const [configuredStops, setConfiguredStops] = useState(() => generateStopsFromOrders(assignedOrders));
+  useEffect(() => {
+    setConfiguredStops(generateStopsFromOrders(assignedOrders));
+  }, [assignedOrders]);
+  
+  
   return (
     <TmsLayout 
       title="Drag & Drop Planning"
@@ -133,7 +212,7 @@ export default function DragDropPlanning() {
       ]}
     >
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="p-6 space-y-6 h-screen flex flex-col">
+      <div className="p-6 space-y-6 h-screen flex flex-col overflow-hidden">
           {/* Header Controls */}
           <div className="flex justify-between items-center">
             <Button 
@@ -158,7 +237,7 @@ export default function DragDropPlanning() {
           <Card className="flex-shrink-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Truck className="h-5 w-5" />
+                <Truck className="h- w-5" />
                 Shipment Configuration - {shipmentConfig.id}
               </CardTitle>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -175,8 +254,8 @@ export default function DragDropPlanning() {
                 {/* Configured Stops */}
                 <div>
                   <h4 className="font-medium mb-3">Configured Stops</h4>
-                  <div className="space-y-2">
-                    {shipmentConfig.stops.map((stop, index) => (
+                  {/* <div className="space-y-2">
+                  {configuredStops.map((stop, index) => (
                       <div key={stop.id} className="flex items-center gap-3 p-3 border rounded-lg">
                         <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
                           {index + 1}
@@ -192,7 +271,46 @@ export default function DragDropPlanning() {
                         </div>
                       </div>
                     ))}
-                  </div>
+                  </div> */}
+                  <Droppable droppableId="configured-stops">
+  {(provided) => (
+    <div
+      ref={provided.innerRef}
+      {...provided.droppableProps}
+      className="space-y-2"
+    >
+      {configuredStops.map((stop, index) => (
+        <Draggable key={stop.id} draggableId={stop.id} index={index}>
+          {(provided, snapshot) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.draggableProps}
+              {...provided.dragHandleProps}
+              className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
+                snapshot.isDragging ? 'bg-primary/5' : ''
+              }`}
+            >
+              <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+                {index + 1}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Badge variant={stop.type === 'pickup' ? 'default' : 'secondary'}>
+                    {stop.type}
+                  </Badge>
+                  <span className="font-medium text-sm">{stop.location}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">{stop.address}</div>
+              </div>
+            </div>
+          )}
+        </Draggable>
+      ))}
+      {provided.placeholder}
+    </div>
+  )}
+</Droppable>
+
                 </div>
 
                 {/* Assigned Orders Drop Zone */}
@@ -252,7 +370,8 @@ export default function DragDropPlanning() {
           </Card>
 
           {/* Bottom Section - Available Orders */}
-          <Card className="flex-1 overflow-hidden">
+          <Card className="flex-1 overflow-hidden flex flex-col">
+
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
@@ -260,7 +379,7 @@ export default function DragDropPlanning() {
                 <Badge variant="secondary">{availableOrders.length} available</Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="h-full overflow-hidden">
+            {/* <CardContent className="h-full overflow-hidden">
               <Droppable droppableId="available-orders">
                 {(provided) => (
                   <div
@@ -342,7 +461,81 @@ export default function DragDropPlanning() {
                   </div>
                 )}
               </Droppable>
-            </CardContent>
+            </CardContent> */}
+{/* <CardContent className="overflow-x-auto max-h-[400px] overflow-y-auto p-0"> */}
+<CardContent className="flex-1 overflow-x-auto overflow-y-auto p-0">
+
+  <Droppable droppableId="available-orders">
+    {(provided) => (
+      <table
+        ref={provided.innerRef}
+        {...provided.droppableProps}
+        className="min-w-full text-sm border-collapse"
+      >
+        <thead className="bg-muted sticky top-0 z-10">
+          <tr>
+            <th className="p-3 text-left">Order ID</th>
+            <th className="p-3 text-left">PO Number</th>
+            <th className="p-3 text-left">Customer</th>
+            <th className="p-3 text-left">Route</th>
+            <th className="p-3 text-left">Pickup Window</th>
+            <th className="p-3 text-left">Pallets</th>
+            <th className="p-3 text-left">Equipment</th>
+            <th className="p-3 text-left">Division</th>
+            <th className="p-3 text-left">Status</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {availableOrders.map((order, index) => (
+            <Draggable
+              key={order.id}
+              draggableId={order.id}
+              index={index}
+              isDragDisabled={!order.compatible}
+            >
+              {(provided, snapshot) => (
+                <tr
+                  ref={provided.innerRef}
+                  {...provided.draggableProps}
+                  {...provided.dragHandleProps}
+                  className={`transition-all ${
+                    order.compatible
+                      ? 'hover:bg-muted cursor-grab active:cursor-grabbing'
+                      : 'opacity-50 cursor-not-allowed'
+                  } ${snapshot.isDragging ? 'bg-primary/5 ring-2 ring-primary/50' : ''}`}
+                  title={!order.compatible ? order.incompatibleReason : ''}
+                >
+                  <td className="p-3 font-medium">{order.id}</td>
+                  <td className="p-3">{order.poNumber}</td>
+                  <td className="p-3">{order.customer}</td>
+                  <td className="p-3">{order.origin} → {order.destination}</td>
+                  <td className="p-3">{order.pickupWindow}</td>
+                  <td className="p-3">{order.pallets}</td>
+                  <td className="p-3">{order.equipment}</td>
+                  <td className="p-3">{order.division}</td>
+                  <td className="p-3">
+                    {order.compatible ? (
+                      <Badge variant="secondary" className="text-green-700 bg-green-100">
+                        Compatible
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-red-700 bg-red-100">
+                        Needs Validation
+                      </Badge>
+                    )}
+                  </td>
+                </tr>
+              )}
+            </Draggable>
+          ))}
+          {provided.placeholder}
+        </tbody>
+      </table>
+    )}
+  </Droppable>
+</CardContent>
+
+
           </Card>
         </div>
       </DragDropContext>
