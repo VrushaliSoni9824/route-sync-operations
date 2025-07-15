@@ -17,6 +17,7 @@ import DispatchBoard from "./pages/shipments/DispatchBoard";
 import NotFound from "./pages/NotFound";
 import { EDILogsView } from "./pages/orders/EDILogsView";
 import { OrderTemplatePicker } from "./components/orders/ListTemplates";
+import RateLookup from "./pages/rates/RateLookup";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/shipments/planning/drag-drop" element={<DragDropPlanning />} />
           <Route path="/shipments/tendering" element={<CarrierTendering />} />
           <Route path="/shipments/dispatch" element={<DispatchBoard />} />
+          <Route path="/rates/lookup" element={<RateLookup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

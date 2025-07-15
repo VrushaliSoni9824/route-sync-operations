@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { VisualFlowModal } from "@/components/orders/VisualFlowModal";
+import { RateEstimationPanel } from "@/components/rates/RateEstimationPanel";
 import { useNavigate } from "react-router-dom";
 
 // Sample order data - in real app this would come from API/router params
@@ -593,6 +594,19 @@ export default function OrderDetail() {
           </TabsContent>
 
           <TabsContent value="quote">
+            <RateEstimationPanel 
+              orderData={{
+                origin: orderData.origin,
+                destination: orderData.destination,
+                freight: orderData.freight,
+                equipment: orderData.equipment
+              }}
+              onApplyQuote={(quote) => {
+                console.log('Applied quote:', quote);
+                // Handle quote application logic
+              }}
+              isEmbedded={false}
+            />
           </TabsContent>
 
           <TabsContent value="stops">

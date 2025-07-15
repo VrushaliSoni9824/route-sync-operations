@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Package, Ship, Truck, Users } from "lucide-react";
+import { Package, Ship, Truck, Users, Calculator } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import {
@@ -35,6 +35,14 @@ const menuItems = [
       // { title: "Carrier Assignment", url: "/shipments/tendering" },
       { title: "Dispatch Board", url: "/shipments/dispatch" },
       // { title: "Tracking", url: "/shipments/tracking" },
+    ]
+  },
+  {
+    title: "Rates",
+    url: "/rates",
+    icon: Calculator,
+    subItems: [
+      { title: "Rate Lookup", url: "/rates/lookup" },
     ]
   },
 ];

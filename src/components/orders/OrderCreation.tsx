@@ -10,11 +10,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Calendar, MapPin, Package, Truck, FileUp, Plus, X } from "lucide-react";
+import { Calendar, MapPin, Package, Truck, FileUp, Plus, X, Calculator } from "lucide-react";
 import { useDropzone } from "react-dropzone";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Trash2 } from "lucide-react";
 import { CommodityFormSection } from "./CommodityFormSection";
+import { RateEstimationPanel } from "@/components/rates/RateEstimationPanel";
 
 interface OrderFormData {
   // Order Type
@@ -76,9 +77,18 @@ export function OrderCreation() {
   const [selectedAccessorials, setSelectedAccessorials] = useState<string[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [orderType, setOrderType] = useState<"FTL" | "LTL">("FTL");
+  const [showRatePanel, setShowRatePanel] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { register, handleSubmit, formState: { errors }, watch } = useForm<OrderFormData>();
+  const watchedFields = watch(["originCity", "originState", "destinationCity", "destinationState", "weight", "equipmentType"]);
+  
+  // Check if user came from rate lookup with prefilled quote
+  const prefilledQuote = location.state?.prefilledQuote;
+  
+  // Auto-show rate panel if key fields are filled
+  const shouldShowRatePanel = watchedFields.some(field => field && String(field).length > 0);
 
   const onDrop = (acceptedFiles: File[]) => {
     setUploadedFiles(prev => [...prev, ...acceptedFiles]);
@@ -650,6 +660,50 @@ export function OrderCreation() {
               </div>
             </TabsContent>
           </Tabs>
+
+          {/* Rate Estimation Panel */}
+          {(shouldShowRatePanel || showRatePanel) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Rate Estimation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RateEstimationPanel
+                  orderData={{
+                    origin: { 
+                      city: watch("originCity") || "", 
+                      state: watch("originState") || "" 
+                    },
+                    destination: { 
+                      city: watch("destinationCity") || "", 
+                      state: watch("destinationState") || "" 
+                    },
+                    freight: { weight: watch("weight")?.toString() || "" },
+                    equipment: watch("equipmentType") || ""
+                  }}
+                  onApplyQuote={(quote) => {
+                    console.log('Applied quote to order:', quote);
+                    // Here you could pre-fill order value fields with quote data
+                  }}
+                  isEmbedded={true}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Get Quote Button - Show when fields are filled but panel not shown */}
+          {!showRatePanel && shouldShowRatePanel && (
+            <div className="text-center">
+              <Button 
+                type="button" 
+                onClick={() => setShowRatePanel(true)}
+                className="w-auto"
+              >
+                <Calculator className="h-4 w-4 mr-2" />
+                Get Rate Quotes
+              </Button>
+            </div>
+          )}
 
           {/* Form Actions */}
           <div className="flex items-center justify-between pt-6 border-t">
